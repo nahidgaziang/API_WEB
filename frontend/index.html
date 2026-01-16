@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to LMS - Learning Management System</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+  <!-- Hero Section -->
+  <div
+    style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+    <div class="container text-center" style="color: white;">
+      <h1 style="font-size: 3.5rem; margin-bottom: 1rem; animation: fadeIn 0.8s ease-out;">Welcome to LMS</h1>
+      <p style="font-size: 1.5rem; margin-bottom: 2rem; color: rgba(255,255,255,0.9); animation: fadeIn 1s ease-out;">
+        Transform your learning journey with our comprehensive platform
+      </p>
+      <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-bottom: 3rem;">
+        <a href="/login.html" class="btn"
+          style="background: white; color: #667eea; padding: 1rem 2.5rem; font-size: 1.1rem;">Get Started →</a>
+        <a href="/register.html" class="btn btn-outline"
+          style="border-color: white; color: white; padding: 1rem 2.5rem; font-size: 1.1rem;">Sign Up</a>
+      </div>
+
+      <!-- Features -->
+      <div class="grid grid-3" style="margin-top: 4rem; animation: fadeIn 1.2s ease-out;">
+        <div class="card" style="text-align: center;">
+          <div style="font-size: 3rem; margin-bottom: 1rem;">📚</div>
+          <h3 style="color: var(--dark);">5 Quality Courses</h3>
+          <p>Expert-led courses across various domains</p>
+        </div>
+        <div class="card" style="text-align: center;">
+          <div style="font-size: 3rem; margin-bottom: 1rem;">👨‍🏫</div>
+          <h3 style="color: var(--dark);">Expert Instructors</h3>
+          <p>Learn from industry professionals</p>
+        </div>
+        <div class="card" style="text-align: center;">
+          <div style="font-size: 3rem; margin-bottom: 1rem;">🏆</div>
+          <h3 style="color: var(--dark);">Certificates</h3>
+          <p>Get certified upon course completion</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script>
+    // Redirect if already logged in
+    if (isLoggedIn()) {
+      redirectToDashboard();
+    }
+  </script>
+</body>
+
+</html>

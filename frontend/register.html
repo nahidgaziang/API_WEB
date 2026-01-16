@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - LMS</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <div class="container-sm" style="margin-top: 3rem;">
+        <div class="card">
+            <div class="card-header text-center">
+                <h2 class="card-title">Create an Account</h2>
+                <p>Join our learning community today</p>
+            </div>
+
+            <div id="alert-container"></div>
+
+            <form id="registerForm">
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" class="form-input" id="full_name" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="email" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" class="form-input" id="username" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-input" id="password" required minlength="6">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">I am a</label>
+                    <select class="form-select" id="role" required>
+                        <option value="">Select role...</option>
+                        <option value="learner">Learner (Student)</option>
+                        <option value="instructor">Instructor (Teacher)</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+            </form>
+
+            <div class="text-center mt-3">
+                <p style="color: var(--gray);">
+                    Already have an account?
+                    <a href="/login.html" style="color: var(--primary); font-weight: 500;">Login here</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/auth.js"></script>
+    <script>
+        // Redirect if already logged in
+        if (isLoggedIn()) {
+            redirectToDashboard();
+        }
+
+        const registerForm = document.getElementById('registerForm');
+        const alertContainer = document.getElementById('alert-container');
+
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = {
+                full_name: document.getElementById('full_name').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                username: document.getElementById('username').value.trim(),
+                password: document.getElementById('password').value,
+                role: document.getElementById('role').value,
+            };
+
+            if (!formData.role) {
+                alertContainer.innerHTML = '<div class="alert alert-error">Please select a role</div>';
+                return;
+            }
+
+            alertContainer.innerHTML = '';
+            showLoading('Creating account...');
+
+            try {
+                const response = await API.auth.register(formData);
+
+                // Store token and user data
+                API.setToken(response.data.token);
+                setUser(response.data.user);
+
+                hideLoading();
+                showAlert('Registration successful! Redirecting...', 'success');
+
+                // Redirect based on role
+                setTimeout(() => {
+                    if (formData.role === 'learner') {
+                        window.location.href = '/learner/bank-setup.html';
+                    } else {
+                        redirectToDashboard();
+                    }
+                }, 1000);
+            } catch (error) {
+                hideLoading();
+                alertContainer.innerHTML = `
+          <div class="alert alert-error">
+            ${error.message || 'Registration failed. Please try again.'}
+          </div>
+        `;
+            }
+        });
+    </script>
+</body>
+
+</html>

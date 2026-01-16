@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learner Dashboard - LMS</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand">LMS</div>
+        <ul class="navbar-menu">
+            <li><a href="/learner/dashboard.html" class="navbar-link">Dashboard</a></li>
+            <li><a href="/learner/courses.html" class="navbar-link">Browse Courses</a></li>
+            <li><a href="/learner/my-courses.html" class="navbar-link">My Courses</a></li>
+            <li><a href="/learner/certificates.html" class="navbar-link">Certificates</a></li>
+            <li><span class="user-name" style="font-weight: 500;"></span></li>
+            <li><a href="#" onclick="logout()" class="navbar-link">Logout</a></li>
+        </ul>
+    </nav>
+
+    <div class="container" style="margin-top: 2rem;">
+        <h1 class="mb-3">Welcome, <span class="user-name"></span>!</h1>
+
+        <!-- Balance Card -->
+        <div class="grid grid-3 mb-4">
+            <div class="card" style="background: var(--gradient-primary); color: white;">
+                <h3 style="color: white;">Account Balance</h3>
+                <p class="course-price" style="color: white; margin: 1rem 0;" id="balance">৳0.00</p>
+                <small style="color: rgba(255,255,255,0.9);" id="account-number">Account: ---</small>
+            </div>
+
+            <div class="card">
+                <h3>My Enrollments</h3>
+                <p class="course-price" id="enrollment-count">0</p>
+                <small style="color: var(--gray);">Courses enrolled</small>
+            </div>
+
+            <div class="card">
+                <h3>Certificates</h3>
+                <p class="course-price" id="certificate-count">0</p>
+                <small style="color: var(--gray);">Earned certificates</small>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card mb-4">
+            <h3 class="mb-3">Quick Actions</h3>
+            <div class="flex gap-2" style="flex-wrap: wrap;">
+                <a href="/learner/courses.html" class="btn btn-primary">Browse All Courses</a>
+                <a href="/learner/my-courses.html" class="btn btn-outline">View My Courses</a>
+                <a href="/learner/certificates.html" class="btn btn-success">My Certificates</a>
+            </div>
+        </div>
+
+        <!-- Recent Enrollments -->
+        <div class="card">
+            <h3 class="mb-3">My Recent Courses</h3>
+            <div id="recent-courses">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/auth.js"></script>
+    <script>
+        requireRole('learner');
+        updateUIBasedOnAuth();
+
+        async function loadDashboardData() {
+            try {
+                // Load balance
+                const balanceData = await API.bank.getBalance();
+                document.getElementById('balance').textContent = `৳${balanceData.data.balance.toFixed(2)}`;
+                document.getElementById('account-number').textContent = `Account: ${balanceData.data.account_number}`;
+
+                // Load enrollments
+                const enrollmentsData = await API.learner.getMyEnrollments();
+                document.getElementById('enrollment-count').textContent = enrollmentsData.data.length;
+
+                // Load certificates
+                const certificatesData = await API.learner.getCertificates();
+                document.getElementById('certificate-count').textContent = certificatesData.data.length;
+
+                // Display recent courses
+                const recentCoursesContainer = document.getElementById('recent-courses');
+                if (enrollmentsData.data.length === 0) {
+                    recentCoursesContainer.innerHTML = '<p style="color: var(--gray);">No courses enrolled yet. <a href="/learner/courses.html" style="color: var(--primary);">Browse courses</a></p>';
+                } else {
+                    recentCoursesContainer.innerHTML = enrollmentsData.data.slice(0, 3).map(enrollment => `
+            <div class="card mb-2">
+              <div class="flex justify-between items-center">
+                <div>
+                  <h4>${enrollment.course.title}</h4>
+                  <p style="color: var(--gray); margin: 0.5rem 0;">Instructor: ${enrollment.course.instructor.full_name}</p>
+                  <span class="badge badge-${enrollment.status === 'completed' ? 'success' : 'primary'}">
+                    ${enrollment.status}
+                  </span>
+                </div>
+                <a href="/learner/course-view.html?id=${enrollment.course.id}" class="btn btn-primary">View Course →</a>
+              </div>
+            </div>
+          `).join('');
+                }
+            } catch (error) {
+                handleAPIError(error);
+                // If bank account not setup
+                if (error.message.includes('Bank account')) {
+                    setTimeout(() => {
+                        window.location.href = '/learner/bank-setup.html';
+                    }, 2000);
+                }
+            }
+        }
+
+        loadDashboardData();
+    </script>
+</body>
+
+</html>

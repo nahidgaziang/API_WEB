@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - LMS</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <div class="container-sm" style="margin-top: 3rem;">
+        <div class="card">
+            <div class="card-header text-center">
+                <h2 class="card-title">Login to LMS</h2>
+                <p>Welcome back! Please login to your account</p>
+            </div>
+
+            <div id="alert-container"></div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" class="form-input" id="username" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-input" id="password" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">Login</button>
+            </form>
+
+            <div class="text-center mt-3">
+                <p style="color: var(--gray);">
+                    Don't have an account?
+                    <a href="/register.html" style="color: var(--primary); font-weight: 500;">Sign up here</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/auth.js"></script>
+    <script>
+        // Redirect if already logged in
+        if (isLoggedIn()) {
+            redirectToDashboard();
+        }
+
+        const loginForm = document.getElementById('loginForm');
+        const alertContainer = document.getElementById('alert-container');
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+
+            alertContainer.innerHTML = '';
+            showLoading('Logging in...');
+
+            try {
+                const response = await API.auth.login({ username, password });
+
+                // Store token and user data
+                API.setToken(response.data.token);
+                setUser(response.data.user);
+
+                hideLoading();
+                showAlert('Login successful! Redirecting...', 'success');
+
+                // Check if user needs to setup bank account
+                if (response.data.user.role === 'learner' && !response.data.hasBankAccount) {
+                    setTimeout(() => {
+                        window.location.href = '/learner/bank-setup.html';
+                    }, 1000);
+                } else {
+                    setTimeout(() => {
+                        redirectToDashboard();
+                    }, 1000);
+                }
+            } catch (error) {
+                hideLoading();
+                alertContainer.innerHTML = `
+          <div class="alert alert-error">
+            ${error.message || 'Login failed. Please check your credentials.'}
+          </div>
+        `;
+            }
+        });
+    </script>
+</body>
+
+</html>

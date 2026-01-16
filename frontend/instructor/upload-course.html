@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Course - LMS</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand">LMS</div>
+        <ul class="navbar-menu">
+            <li><a href="/instructor/dashboard.html" class="navbar-link">Dashboard</a></li>
+            <li><a href="/instructor/upload-course.html" class="navbar-link">Upload Course</a></li>
+            <li><a href="/instructor/upload-materials.html" class="navbar-link">Upload Materials</a></li>
+            <li><span class="user-name" style="font-weight: 500;"></span></li>
+            <li><a href="#" onclick="logout()" class="navbar-link">Logout</a></li>
+        </ul>
+    </nav>
+
+    <div class="container-sm" style="margin-top: 2rem;">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Upload New Course</h2>
+                <p>Share your knowledge with learners around the world</p>
+            </div>
+
+            <div class="alert alert-info mb-3">
+                <strong>ℹ️ Note:</strong> You'll receive a lump sum payment immediately upon uploading your course.
+            </div>
+
+            <div id="alert-container"></div>
+
+            <form id="uploadCourseForm">
+                <div class="form-group">
+                    <label class="form-label">Course Title *</label>
+                    <input type="text" class="form-input" id="title" required
+                        placeholder="e.g., Introduction to Python Programming">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Course Description</label>
+                    <textarea class="form-textarea" id="description" rows="5"
+                        placeholder="Describe what students will learn in this course..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Course Price (৳) *</label>
+                    <input type="number" class="form-input" id="price" required min="100" step="10" value="999"
+                        placeholder="Set the price for learners">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Upload Payment (৳) *</label>
+                    <input type="number" class="form-input" id="upload_payment" required min="500" step="100"
+                        value="2000" placeholder="Amount you want to receive for uploading">
+                    <small style="color: var(--gray);">You'll receive this amount immediately from LMS</small>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">Upload Course & Get Paid</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/auth.js"></script>
+    <script>
+        requireRole('instructor');
+        updateUIBasedOnAuth();
+
+        const uploadCourseForm = document.getElementById('uploadCourseForm');
+        const alertContainer = document.getElementById('alert-container');
+
+        uploadCourseForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const courseData = {
+                title: document.getElementById('title').value.trim(),
+                description: document.getElementById('description').value.trim(),
+                price: parseFloat(document.getElementById('price').value),
+                upload_payment: parseFloat(document.getElementById('upload_payment').value),
+            };
+
+            if (!courseData.title || !courseData.price || !courseData.upload_payment) {
+                alertContainer.innerHTML = '<div class="alert alert-error">Please fill in all required fields</div>';
+                return;
+            }
+
+            alertContainer.innerHTML = '';
+            showLoading('Uploading course and processing payment...');
+
+            try {
+                const response = await API.instructor.uploadCourse(courseData);
+
+                hideLoading();
+                showAlert(`Course uploaded successfully! You received ৳${response.data.payment_received}`, 'success');
+
+                setTimeout(() => {
+                    window.location.href = '/instructor/dashboard.html';
+                }, 2000);
+            } catch (error) {
+                hideLoading();
+                alertContainer.innerHTML = `
+          <div class="alert alert-error">
+            ${error.message || 'Failed to upload course. Please try again.'}
+          </div>
+        `;
+            }
+        });
+    </script>
+</body>
+
+</html>

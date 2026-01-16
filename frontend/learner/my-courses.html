@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Courses - LMS</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand">LMS</div>
+        <ul class="navbar-menu">
+            <li><a href="/learner/dashboard.html" class="navbar-link">Dashboard</a></li>
+            <li><a href="/learner/courses.html" class="navbar-link">Browse Courses</a></li>
+            <li><a href="/learner/my-courses.html" class="navbar-link">My Courses</a></li>
+            <li><a href="/learner/certificates.html" class="navbar-link">Certificates</a></li>
+            <li><span class="user-name" style="font-weight: 500;"></span></li>
+            <li><a href="#" onclick="logout()" class="navbar-link">Logout</a></li>
+        </ul>
+    </nav>
+
+    <div class="container" style="margin-top: 2rem;">
+        <h1 class="mb-3">My Enrolled Courses</h1>
+
+        <div id="courses-container">
+            <div class="spinner"></div>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/auth.js"></script>
+    <script>
+        requireRole('learner');
+        updateUIBasedOnAuth();
+
+        async function loadMyCourses() {
+            try {
+                const enrollmentsData = await API.learner.getMyEnrollments();
+                const coursesContainer = document.getElementById('courses-container');
+
+                if (enrollmentsData.data.length === 0) {
+                    coursesContainer.innerHTML = `
+            <div class="card text-center">
+              <h3>No courses yet</h3>
+              <p style="color: var(--gray);">You haven't enrolled in any courses yet.</p>
+              <a href="/learner/courses.html" class="btn btn-primary">Browse Courses</a>
+            </div>
+          `;
+                    return;
+                }
+
+                coursesContainer.innerHTML = enrollmentsData.data.map(enrollment => {
+                    const course = enrollment.course;
+                    const isCompleted = enrollment.status === 'completed';
+                    const hasCertificate = enrollment.certificate;
+
+                    return `
+            <div class="card course-card mb-3 fade-in">
+              <div class="flex justify-between items-center" style="flex-wrap: wrap; gap: 1rem;">
+                <div style="flex: 1;">
+                  <h3>${course.title}</h3>
+                  <p style="color: var(--gray); margin: 0.5rem 0;">${course.description || ''}</p>
+                  <p class="course-instructor">👨‍🏫 ${course.instructor.full_name}</p>
+                  <div class="mt-2">
+                    <span class="badge badge-${isCompleted ? 'success' : 'primary'}">
+                      ${enrollment.status.replace('_', ' ').toUpperCase()}
+                    </span>
+                    ${hasCertificate ? '<span class="badge badge-success ml-1">🏆 Certified</span>' : ''}
+                  </div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                  <a href="/learner/course-view.html?id=${course.id}" class="btn btn-primary">View Materials →</a>
+                  ${!isCompleted ? `
+                    <button class="btn btn-success" onclick="completeCourse(${course.id})">
+                      Mark as Complete
+                    </button>
+                  ` : ''}
+                  ${hasCertificate ? `
+                    <a href="/learner/certificates.html" class="btn btn-outline">View Certificate</a>
+                  ` : ''}
+                </div>
+              </div>
+            </div>
+          `;
+                }).join('');
+            } catch (error) {
+                handleAPIError(error);
+            }
+        }
+
+        async function completeCourse(courseId) {
+            if (!confirm('Are you sure you want to mark this course as completed? A certificate will be generated.')) {
+                return;
+            }
+
+            showLoading('Generating certificate...');
+
+            try {
+                await API.learner.completeCourse(courseId);
+                hideLoading();
+                showAlert('Congratulations! Course completed and certificate generated!', 'success');
+
+                setTimeout(() => {
+                    loadMyCourses();
+                }, 1000);
+            } catch (error) {
+                handleAPIError(error);
+            }
+        }
+
+        loadMyCourses();
+    </script>
+</body>
+
+</html>

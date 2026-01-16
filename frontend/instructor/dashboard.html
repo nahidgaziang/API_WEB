@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instructor Dashboard - LMS</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand">LMS</div>
+        <ul class="navbar-menu">
+            <li><a href="/instructor/dashboard.html" class="navbar-link">Dashboard</a></li>
+            <li><a href="/instructor/upload-course.html" class="navbar-link">Upload Course</a></li>
+            <li><a href="/instructor/upload-materials.html" class="navbar-link">Upload Materials</a></li>
+            <li><span class="user-name" style="font-weight: 500;"></span></li>
+            <li><a href="#" onclick="logout()" class="navbar-link">Logout</a></li>
+        </ul>
+    </nav>
+
+    <div class="container" style="margin-top: 2rem;">
+        <h1 class="mb-3">Instructor Dashboard</h1>
+
+        <!-- Stats -->
+        <div class="grid grid-3 mb-4">
+            <div class="card" style="background: var(--gradient-primary); color: white;">
+                <h3 style="color: white;">Account Balance</h3>
+                <p class="course-price" style="color: white; margin: 1rem 0;" id="balance">৳0.00</p>
+                <small style="color: rgba(255,255,255,0.9);" id="account-number">Account: ---</small>
+            </div>
+
+            <div class="card">
+                <h3>My Courses</h3>
+                <p class="course-price" id="course-count">0</p>
+                <small style="color: var(--gray);">Courses uploaded</small>
+            </div>
+
+            <div class="card">
+                <h3>Pending Payments</h3>
+                <p class="course-price" id="pending-count">0</p>
+                <small style="color: var(--gray);">Awaiting claim</small>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card mb-4">
+            <h3 class="mb-3">Quick Actions</h3>
+            <div class="flex gap-2" style="flex-wrap: wrap;">
+                <a href="/instructor/upload-course.html" class="btn btn-primary">Upload New Course</a>
+                <a href="/instructor/upload-materials.html" class="btn btn-outline">Upload Materials</a>
+                <button class="btn btn-success" onclick="loadPendingPayments()">Claim Payments</button>
+            </div>
+        </div>
+
+        <!-- My Courses -->
+        <div class="card mb-4">
+            <h3 class="mb-3">My Courses</h3>
+            <div id="my-courses">
+                <div class="spinner"></div>
+            </div>
+        </div>
+
+        <!-- Pending Payments -->
+        <div class="card" id="pending-payments-section" style="display: none;">
+            <h3 class="mb-3">Pending Payments to Claim</h3>
+            <div id="pending-payments"></div>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/auth.js"></script>
+    <script>
+        requireRole('instructor');
+        updateUIBasedOnAuth();
+
+        async function loadDashboard() {
+            try {
+                // Load balance
+                const balanceData = await API.bank.getBalance();
+                document.getElementById('balance').textContent = `৳${balanceData.data.balance.toFixed(2)}`;
+                document.getElementById('account-number').textContent = `Account: ${balanceData.data.account_number}`;
+
+                // Load courses
+                const coursesData = await API.instructor.getMyCourses();
+                document.getElementById('course-count').textContent = coursesData.data.length;
+
+                const myCoursesContainer = document.getElementById('my-courses');
+                if (coursesData.data.length === 0) {
+                    myCoursesContainer.innerHTML = '<p style="color: var(--gray);">No courses uploaded yet.</p>';
+                } else {
+                    myCoursesContainer.innerHTML = coursesData.data.map(course => `
+            <div class="card mb-2 course-card">
+              <div class="flex justify-between items-center">
+                <div>
+                  <h4>${course.title}</h4>
+                  <p style="color: var(--gray); margin: 0.5rem 0;">${course.description || ''}</p>
+                  <div class="flex gap-1 items-center mt-1">
+                    <span class="badge badge-primary">৳${parseFloat(course.price).toFixed(2)}</span>
+                    <span class="badge badge-success">${course.materials?.length || 0} materials</span>
+                    <span class="badge badge-${course.status === 'active' ? 'success' : 'warning'}">${course.status}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `).join('');
+                }
+
+                // Load pending payments
+                const pendingData = await API.instructor.getPendingTransactions();
+                document.getElementById('pending-count').textContent = pendingData.data.length;
+
+            } catch (error) {
+                handleAPIError(error);
+            }
+        }
+
+        async function loadPendingPayments() {
+            try {
+                const pendingData = await API.instructor.getPendingTransactions();
+                const section = document.getElementById('pending-payments-section');
+                const container = document.getElementById('pending-payments');
+
+                if (pendingData.data.length === 0) {
+                    container.innerHTML = '<p style="color: var(--gray);">No pending payments</p>';
+                    section.style.display = 'block';
+                    return;
+                }
+
+                container.innerHTML = pendingData.data.map(txn => `
+          <div class="card mb-2" style="background: #fef3c7;">
+            <div class="flex justify-between items-center">
+              <div>
+                <h4>Payment from LMS</h4>
+                <p class="course-price" style="color: var(--dark);">৳${parseFloat(txn.amount).toFixed(2)}</p>
+                <small style="color: var(--gray);">Transaction ID: ${txn.id} | ${txn.transaction_type}</small>
+              </div>
+              <button class="btn btn-success" onclick="claimPayment(${txn.id})">Claim Now →</button>
+            </div>
+          </div>
+        `).join('');
+                section.style.display = 'block';
+            } catch (error) {
+                handleAPIError(error);
+            }
+        }
+
+        async function claimPayment(txnId) {
+            const secret = prompt('Enter your account secret to claim payment:');
+            if (!secret) return;
+
+            showLoading('Processing payment claim...');
+
+            try {
+                await API.instructor.claimPayment({ transaction_id: txnId, secret });
+                hideLoading();
+                showAlert('Payment claimed successfully!', 'success');
+
+                setTimeout(() => {
+                    loadDashboard();
+                    loadPendingPayments();
+                }, 1000);
+            } catch (error) {
+                handleAPIError(error);
+            }
+        }
+
+        loadDashboard();
+    </script>
+</body>
+
+</html>

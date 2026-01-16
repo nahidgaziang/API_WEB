@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Materials - LMS</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand">LMS</div>
+        <ul class="navbar-menu">
+            <li><a href="/instructor/dashboard.html" class="navbar-link">Dashboard</a></li>
+            <li><a href="/instructor/upload-course.html" class="navbar-link">Upload Course</a></li>
+            <li><a href="/instructor/upload-materials.html" class="navbar-link">Upload Materials</a></li>
+            <li><span class="user-name" style="font-weight: 500;"></span></li>
+            <li><a href="#" onclick="logout()" class="navbar-link">Logout</a></li>
+        </ul>
+    </nav>
+
+    <div class="container-sm" style="margin-top: 2rem;">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Upload Course Materials</h2>
+                <p>Add text, videos, audio, or quizzes to your courses</p>
+            </div>
+
+            <div id="alert-container"></div>
+
+            <form id="uploadMaterialForm">
+                <div class="form-group">
+                    <label class="form-label">Select Course *</label>
+                    <select class="form-select" id="course_id" required>
+                        <option value="">Loading your courses...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Material Title *</label>
+                    <input type="text" class="form-input" id="title" required
+                        placeholder="e.g., Introduction to Variables">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Material Type *</label>
+                    <select class="form-select" id="type" required>
+                        <option value="">Select type...</option>
+                        <option value="text">Text Content</option>
+                        <option value="video">Video</option>
+                        <option value="audio">Audio</option>
+                        <option value="mcq">Multiple Choice Quiz</option>
+                    </select>
+                </div>
+
+                <!-- Text Content -->
+                <div class="form-group" id="text-content-group" style="display: none;">
+                    <label class="form-label">Text Content</label>
+                    <textarea class="form-textarea" id="content" rows="8"
+                        placeholder="Write your lesson content here..."></textarea>
+                </div>
+
+                <!-- Video/Audio URL -->
+                <div class="form-group" id="file-url-group" style="display: none;">
+                    <label class="form-label">Media URL</label>
+                    <input type="url" class="form-input" id="file_url" placeholder="https://example.com/video.mp4">
+                    <small style="color: var(--gray);">Enter the URL of your hosted media file</small>
+                </div>
+
+                <!-- MCQ Content -->
+                <div class="form-group" id="mcq-content-group" style="display: none;">
+                    <label class="form-label">MCQ Questions (JSON Format)</label>
+                    <textarea class="form-textarea" id="mcq_content" rows="10"
+                        placeholder='{"questions": [{"q": "What is 2+2?", "options": ["3", "4", "5"], "answer": 1}]}'></textarea>
+                    <small style="color: var(--gray);">Format: {"questions": [{"q": "question", "options": ["opt1",
+                        "opt2"], "answer": 0}]}</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Order Index</label>
+                    <input type="number" class="form-input" id="order_index" value="0" min="0">
+                    <small style="color: var(--gray);">Order in which this material appears (0, 1, 2...)</small>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">Upload Material</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/auth.js"></script>
+    <script>
+        requireRole('instructor');
+        updateUIBasedOnAuth();
+
+        const uploadMaterialForm = document.getElementById('uploadMaterialForm');
+        const alertContainer = document.getElementById('alert-container');
+        const typeSelect = document.getElementById('type');
+        const courseSelect = document.getElementById('course_id');
+
+        // Load instructor's courses
+        async function loadCourses() {
+            try {
+                const coursesData = await API.instructor.getMyCourses();
+
+                if (coursesData.data.length === 0) {
+                    courseSelect.innerHTML = '<option value="">No courses available. Please upload a course first.</option>';
+                    return;
+                }
+
+                courseSelect.innerHTML = '<option value="">Select a course...</option>' +
+                    coursesData.data.map(course =>
+                        `<option value="${course.id}">${course.title}</option>`
+                    ).join('');
+            } catch (error) {
+                courseSelect.innerHTML = '<option value="">Error loading courses</option>';
+                handleAPIError(error);
+            }
+        }
+
+        // Show/hide fields based on material type
+        typeSelect.addEventListener('change', () => {
+            const type = typeSelect.value;
+
+            document.getElementById('text-content-group').style.display = type === 'text' ? 'block' : 'none';
+            document.getElementById('file-url-group').style.display = (type === 'video' || type === 'audio') ? 'block' : 'none';
+            document.getElementById('mcq-content-group').style.display = type === 'mcq' ? 'block' : 'none';
+        });
+
+        uploadMaterialForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const type = document.getElementById('type').value;
+            const materialData = {
+                course_id: parseInt(document.getElementById('course_id').value),
+                title: document.getElementById('title').value.trim(),
+                type: type,
+                order_index: parseInt(document.getElementById('order_index').value),
+            };
+
+            // Add type-specific content
+            if (type === 'text') {
+                materialData.content = document.getElementById('content').value.trim();
+            } else if (type === 'video' || type === 'audio') {
+                materialData.file_url = document.getElementById('file_url').value.trim();
+            } else if (type === 'mcq') {
+                materialData.content = document.getElementById('mcq_content').value.trim();
+
+                // Validate JSON
+                try {
+                    JSON.parse(materialData.content);
+                } catch (e) {
+                    alertContainer.innerHTML = '<div class="alert alert-error">Invalid JSON format for MCQ</div>';
+                    return;
+                }
+            }
+
+            if (!materialData.course_id) {
+                alertContainer.innerHTML = '<div class="alert alert-error">Please select a course</div>';
+                return;
+            }
+
+            alertContainer.innerHTML = '';
+            showLoading('Uploading material...');
+
+            try {
+                await API.instructor.uploadMaterial(materialData);
+
+                hideLoading();
+                showAlert('Material uploaded successfully!', 'success');
+
+                // Reset form
+                uploadMaterialForm.reset();
+                typeSelect.dispatchEvent(new Event('change'));
+            } catch (error) {
+                hideLoading();
+                alertContainer.innerHTML = `
+          <div class="alert alert-error">
+            ${error.message || 'Failed to upload material. Please try again.'}
+          </div>
+        `;
+            }
+        });
+
+        loadCourses();
+    </script>
+</body>
+
+</html>

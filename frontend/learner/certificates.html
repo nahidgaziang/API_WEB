@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Certificates - LMS</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .certificate {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xl);
+            margin-bottom: 1.5rem;
+        }
+
+        .certificate h3 {
+            color: white;
+        }
+
+        .certificate-code {
+            font-family: 'Courier New', monospace;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            display: inline-block;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand">LMS</div>
+        <ul class="navbar-menu">
+            <li><a href="/learner/dashboard.html" class="navbar-link">Dashboard</a></li>
+            <li><a href="/learner/courses.html" class="navbar-link">Browse Courses</a></li>
+            <li><a href="/learner/my-courses.html" class="navbar-link">My Courses</a></li>
+            <li><a href="/learner/certificates.html" class="navbar-link">Certificates</a></li>
+            <li><span class="user-name" style="font-weight: 500;"></span></li>
+            <li><a href="#" onclick="logout()" class="navbar-link">Logout</a></li>
+        </ul>
+    </nav>
+
+    <div class="container" style="margin-top: 2rem;">
+        <h1 class="mb-3">My Certificates</h1>
+
+        <div id="certificates-container">
+            <div class="spinner"></div>
+        </div>
+    </div>
+
+    <script src="/js/api.js"></script>
+    <script src="/js/auth.js"></script>
+    <script>
+        requireRole('learner');
+        updateUIBasedOnAuth();
+
+        async function loadCertificates() {
+            try {
+                const certificatesData = await API.learner.getCertificates();
+                const certificatesContainer = document.getElementById('certificates-container');
+
+                if (certificatesData.data.length === 0) {
+                    certificatesContainer.innerHTML = `
+            <div class="card text-center">
+              <h3>No certificates yet</h3>
+              <p style="color: var(--gray);">Complete courses to earn certificates!</p>
+              <a href="/learner/my-courses.html" class="btn btn-primary">View My Courses</a>
+            </div>
+          `;
+                    return;
+                }
+
+                certificatesContainer.innerHTML = certificatesData.data.map(cert => {
+                    const enrollment = cert.enrollment;
+                    const course = enrollment.course;
+                    const learner = enrollment.learner;
+
+                    return `
+            <div class="certificate fade-in">
+              <div style="text-align: center;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">🏆</div>
+                <h2 style="color: white; margin-bottom: 1rem;">Certificate of Completion</h2>
+                <p style="font-size: 1.2rem; margin-bottom: 0.5rem;">This certifies that</p>
+                <h3 style="color: white; font-size: 2rem; margin: 1rem 0;">${learner.full_name}</h3>
+                <p style="font-size: 1.2rem; margin-bottom: 0.5rem;">has successfully completed</p>
+                <h4 style="color: white; font-size: 1.5rem; margin: 1rem 0;">${course.title}</h4>
+                <div class="certificate-code">Certificate Code: ${cert.certificate_code}</div>
+                <p style="margin-top: 1rem; font-size: 0.9rem;">Issued on: ${new Date(cert.issue_date).toLocaleDateString()}</p>
+              </div>
+            </div>
+          `;
+                }).join('');
+            } catch (error) {
+                handleAPIError(error);
+            }
+        }
+
+        loadCertificates();
+    </script>
+</body>
+
+</html>
