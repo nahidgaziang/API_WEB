@@ -44,7 +44,6 @@
     <script src="/js/api.js"></script>
     <script src="/js/auth.js"></script>
     <script>
-        // Redirect if already logged in
         if (isLoggedIn()) {
             redirectToDashboard();
         }
@@ -64,17 +63,16 @@
             try {
                 const response = await API.auth.login({ username, password });
 
-                // Store token and user data
                 API.setToken(response.data.token);
                 setUser(response.data.user);
 
                 hideLoading();
                 showAlert('Login successful! Redirecting...', 'success');
 
-                // Check if user needs to setup bank account
-                if (response.data.user.role === 'learner' && !response.data.hasBankAccount) {
+                const role = response.data.user.role;
+                if (!response.data.hasBankAccount && (role === 'learner' || role === 'instructor')) {
                     setTimeout(() => {
-                        window.location.href = '/learner/bank-setup.html';
+                        window.location.href = `/${role}/bank-setup.html`;
                     }, 1000);
                 } else {
                     setTimeout(() => {

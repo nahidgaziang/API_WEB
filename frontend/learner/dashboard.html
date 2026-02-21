@@ -24,11 +24,10 @@
     <div class="container" style="margin-top: 2rem;">
         <h1 class="mb-3">Welcome, <span class="user-name"></span>!</h1>
 
-        <!-- Balance Card -->
         <div class="grid grid-3 mb-4">
             <div class="card" style="background: var(--gradient-primary); color: white;">
                 <h3 style="color: white;">Account Balance</h3>
-                <p class="course-price" style="color: white; margin: 1rem 0;" id="balance">৳0.00</p>
+                <p class="course-price" style="color: white; margin: 1rem 0;" id="balance">0.00</p>
                 <small style="color: rgba(255,255,255,0.9);" id="account-number">Account: ---</small>
             </div>
 
@@ -45,7 +44,6 @@
             </div>
         </div>
 
-        <!-- Quick Actions -->
         <div class="card mb-4">
             <h3 class="mb-3">Quick Actions</h3>
             <div class="flex gap-2" style="flex-wrap: wrap;">
@@ -55,7 +53,6 @@
             </div>
         </div>
 
-        <!-- Recent Enrollments -->
         <div class="card">
             <h3 class="mb-3">My Recent Courses</h3>
             <div id="recent-courses">
@@ -72,20 +69,16 @@
 
         async function loadDashboardData() {
             try {
-                // Load balance
                 const balanceData = await API.bank.getBalance();
-                document.getElementById('balance').textContent = `৳${balanceData.data.balance.toFixed(2)}`;
+                document.getElementById('balance').textContent = `${balanceData.data.balance.toFixed(2)} Tk`;
                 document.getElementById('account-number').textContent = `Account: ${balanceData.data.account_number}`;
 
-                // Load enrollments
                 const enrollmentsData = await API.learner.getMyEnrollments();
                 document.getElementById('enrollment-count').textContent = enrollmentsData.data.length;
 
-                // Load certificates
                 const certificatesData = await API.learner.getCertificates();
                 document.getElementById('certificate-count').textContent = certificatesData.data.length;
 
-                // Display recent courses
                 const recentCoursesContainer = document.getElementById('recent-courses');
                 if (enrollmentsData.data.length === 0) {
                     recentCoursesContainer.innerHTML = '<p style="color: var(--gray);">No courses enrolled yet. <a href="/learner/courses.html" style="color: var(--primary);">Browse courses</a></p>';
@@ -100,14 +93,13 @@
                     ${enrollment.status}
                   </span>
                 </div>
-                <a href="/learner/course-view.html?id=${enrollment.course.id}" class="btn btn-primary">View Course →</a>
+                <a href="/learner/course-view.html?id=${enrollment.course.id}" class="btn btn-primary">View Course</a>
               </div>
             </div>
           `).join('');
                 }
             } catch (error) {
                 handleAPIError(error);
-                // If bank account not setup
                 if (error.message.includes('Bank account')) {
                     setTimeout(() => {
                         window.location.href = '/learner/bank-setup.html';

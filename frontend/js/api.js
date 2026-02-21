@@ -1,22 +1,17 @@
-// API Client for LMS System
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = '/api';
 
-// Get token from localStorage
 function getToken() {
     return localStorage.getItem('lms_token');
 }
 
-// Set token in localStorage
 function setToken(token) {
     localStorage.setItem('lms_token', token);
 }
 
-// Remove token from localStorage
 function removeToken() {
     localStorage.removeItem('lms_token');
 }
 
-// Generic API request function
 async function apiRequest(endpoint, options = {}) {
     const token = getToken();
 
@@ -53,7 +48,6 @@ async function apiRequest(endpoint, options = {}) {
     }
 }
 
-// Auth API
 const authAPI = {
     register: (userData) => apiRequest('/auth/register', {
         method: 'POST',
@@ -70,7 +64,6 @@ const authAPI = {
     getProfile: () => apiRequest('/auth/profile'),
 };
 
-// Bank API
 const bankAPI = {
     setupAccount: (accountData) => apiRequest('/bank/setup', {
         method: 'POST',
@@ -84,7 +77,6 @@ const bankAPI = {
     }),
 };
 
-// Learner API
 const learnerAPI = {
     getAllCourses: () => apiRequest('/learner/courses'),
 
@@ -105,7 +97,6 @@ const learnerAPI = {
     getCertificates: () => apiRequest('/learner/certificates'),
 };
 
-// Instructor API
 const instructorAPI = {
     uploadCourse: (courseData) => apiRequest('/instructor/courses', {
         method: 'POST',
@@ -127,7 +118,6 @@ const instructorAPI = {
     }),
 };
 
-// Export all APIs
 const API = {
     auth: authAPI,
     bank: bankAPI,

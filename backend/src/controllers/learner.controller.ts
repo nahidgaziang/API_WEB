@@ -5,7 +5,6 @@ import { generateCertificateCode } from '../utils/helpers';
 import { config } from '../config/config';
 import sequelize from '../config/database';
 
-// Get all courses
 export const getAllCourses = async (req: Request, res: Response): Promise<void> => {
     try {
         const courses = await Course.findAll({
@@ -29,7 +28,6 @@ export const getAllCourses = async (req: Request, res: Response): Promise<void> 
     }
 };
 
-// Enroll in a course (purchase)
 export const enrollInCourse = async (req: AuthRequest, res: Response): Promise<void> => {
     const transaction = await sequelize.transaction();
 
@@ -43,7 +41,6 @@ export const enrollInCourse = async (req: AuthRequest, res: Response): Promise<v
             return;
         }
 
-        // Check if already enrolled
         const existingEnrollment = await Enrollment.findOne({
             where: { learner_id: userId, course_id },
         });
@@ -54,7 +51,6 @@ export const enrollInCourse = async (req: AuthRequest, res: Response): Promise<v
             return;
         }
 
-        // Get course details
         const course = await Course.findByPk(course_id);
         if (!course) {
             await transaction.rollback();
@@ -62,7 +58,6 @@ export const enrollInCourse = async (req: AuthRequest, res: Response): Promise<v
             return;
         }
 
-        // Get learner's bank account
         const learnerBank = await BankAccount.findOne({
             where: { user_id: userId },
             lock: transaction.LOCK.UPDATE,
@@ -75,14 +70,12 @@ export const enrollInCourse = async (req: AuthRequest, res: Response): Promise<v
             return;
         }
 
-        // Verify bank secret (plain text comparison)
         if (secret !== learnerBank.secret) {
             await transaction.rollback();
             res.status(401).json({ success: false, message: 'Invalid bank secret' });
             return;
         }
 
-        // Check balance
         const price = parseFloat(course.price.toString());
         if (parseFloat(learnerBank.balance.toString()) < price) {
             await transaction.rollback();
@@ -90,7 +83,6 @@ export const enrollInCourse = async (req: AuthRequest, res: Response): Promise<v
             return;
         }
 
-        // Get LMS organization bank account
         const lmsBank = await BankAccount.findOne({
             where: { account_number: config.lms.accountNumber },
             lock: transaction.LOCK.UPDATE,
@@ -103,14 +95,12 @@ export const enrollInCourse = async (req: AuthRequest, res: Response): Promise<v
             return;
         }
 
-        // Process payment
         learnerBank.balance = parseFloat(learnerBank.balance.toString()) - price;
         lmsBank.balance = parseFloat(lmsBank.balance.toString()) + price;
 
         await learnerBank.save({ transaction });
         await lmsBank.save({ transaction });
 
-        // Create enrollment
         const enrollment = await Enrollment.create(
             {
                 learner_id: userId!,
@@ -120,7 +110,6 @@ export const enrollInCourse = async (req: AuthRequest, res: Response): Promise<v
             { transaction }
         );
 
-        // Create transaction record
         await Transaction.create(
             {
                 from_account: learnerBank.account_number,
@@ -133,6 +122,25 @@ export const enrollInCourse = async (req: AuthRequest, res: Response): Promise<v
             },
             { transaction }
         );
+
+        const instructorBank = await BankAccount.findOne({
+            where: { user_id: course.instructor_id },
+            transaction,
+        });
+
+        if (instructorBank) {
+            await Transaction.create(
+                {
+                    from_account: lmsBank.account_number,
+                    to_account: instructorBank.account_number,
+                    amount: price,
+                    transaction_type: 'instructor_payment',
+                    reference_id: course_id,
+                    status: 'pending',
+                },
+                { transaction }
+            );
+        }
 
         await transaction.commit();
 
@@ -154,7 +162,6 @@ export const enrollInCourse = async (req: AuthRequest, res: Response): Promise<v
     }
 };
 
-// Get my enrolled courses
 export const getMyEnrollments = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
@@ -191,13 +198,11 @@ export const getMyEnrollments = async (req: AuthRequest, res: Response): Promise
     }
 };
 
-// Get course materials (only if enrolled)
 export const getCourseMaterials = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const { courseId } = req.params;
 
-        // Check if enrolled
         const enrollment = await Enrollment.findOne({
             where: { learner_id: userId, course_id: courseId },
         });
@@ -207,7 +212,6 @@ export const getCourseMaterials = async (req: AuthRequest, res: Response): Promi
             return;
         }
 
-        // Get materials
         const materials = await CourseMaterial.findAll({
             where: { course_id: courseId },
             order: [['order_index', 'ASC']],
@@ -223,13 +227,11 @@ export const getCourseMaterials = async (req: AuthRequest, res: Response): Promi
     }
 };
 
-// Complete a course and get certificate
 export const completeCourse = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
         const { course_id } = req.body;
 
-        // Find enrollment
         const enrollment = await Enrollment.findOne({
             where: { learner_id: userId, course_id },
             include: [{ model: Course, as: 'course' }],
@@ -245,12 +247,10 @@ export const completeCourse = async (req: AuthRequest, res: Response): Promise<v
             return;
         }
 
-        // Update enrollment
         enrollment.status = 'completed';
         enrollment.completion_date = new Date();
         await enrollment.save();
 
-        // Generate certificate
         const certificateCode = generateCertificateCode();
         const certificate = await Certificate.create({
             enrollment_id: enrollment.id,
@@ -275,7 +275,6 @@ export const completeCourse = async (req: AuthRequest, res: Response): Promise<v
     }
 };
 
-// Get my certificates
 export const getMyCertificates = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;

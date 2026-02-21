@@ -3,7 +3,6 @@ import { BankAccount } from '../models';
 import { AuthRequest } from '../middleware/auth';
 import sequelize from '../config/database';
 
-// Setup bank account (first-time for learner/instructor)
 export const setupBankAccount = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
@@ -14,20 +13,17 @@ export const setupBankAccount = async (req: AuthRequest, res: Response): Promise
             return;
         }
 
-        // Check if user already has a bank account
         const existing = await BankAccount.findOne({ where: { user_id: userId } });
         if (existing) {
             res.status(409).json({ success: false, message: 'Bank account already exists' });
             return;
         }
 
-        // Store secret as plain text (for educational purposes only)
-        // Create bank account
         const bankAccount = await BankAccount.create({
             user_id: userId!,
             account_number,
             secret: secret,
-            balance: initial_balance || 5000, // Default initial balance
+            balance: initial_balance || 5000,
         });
 
         res.status(201).json({
@@ -44,7 +40,6 @@ export const setupBankAccount = async (req: AuthRequest, res: Response): Promise
     }
 };
 
-// Get bank balance
 export const getBalance = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;
@@ -60,7 +55,7 @@ export const getBalance = async (req: AuthRequest, res: Response): Promise<void>
             success: true,
             data: {
                 account_number: bankAccount.account_number,
-                balance: parseFloat(bankAccount.balance.toString()), // Return as number for frontend formatting
+                balance: parseFloat(bankAccount.balance.toString()),
             },
         });
     } catch (error: any) {
@@ -69,7 +64,6 @@ export const getBalance = async (req: AuthRequest, res: Response): Promise<void>
     }
 };
 
-// Process transaction (bank simulation)
 export const processTransaction = async (req: Request, res: Response): Promise<void> => {
     const transaction = await sequelize.transaction();
 
@@ -82,7 +76,6 @@ export const processTransaction = async (req: Request, res: Response): Promise<v
             return;
         }
 
-        // Get from account
         const fromBank = await BankAccount.findOne({
             where: { account_number: from_account },
             lock: transaction.LOCK.UPDATE,
@@ -95,21 +88,18 @@ export const processTransaction = async (req: Request, res: Response): Promise<v
             return;
         }
 
-        // Verify secret (plain text comparison)
         if (secret !== fromBank.secret) {
             await transaction.rollback();
             res.status(401).json({ success: false, message: 'Invalid secret' });
             return;
         }
 
-        // Check balance
         if (parseFloat(fromBank.balance.toString()) < amount) {
             await transaction.rollback();
             res.status(400).json({ success: false, message: 'Insufficient balance' });
             return;
         }
 
-        // Get to account
         const toBank = await BankAccount.findOne({
             where: { account_number: to_account },
             lock: transaction.LOCK.UPDATE,
@@ -122,7 +112,6 @@ export const processTransaction = async (req: Request, res: Response): Promise<v
             return;
         }
 
-        // Perform transaction
         fromBank.balance = parseFloat(fromBank.balance.toString()) - amount;
         toBank.balance = parseFloat(toBank.balance.toString()) + amount;
 
@@ -148,7 +137,6 @@ export const processTransaction = async (req: Request, res: Response): Promise<v
     }
 };
 
-// Get account by account number
 export const getAccountByNumber = async (req: Request, res: Response): Promise<void> => {
     try {
         const { account_number } = req.params;

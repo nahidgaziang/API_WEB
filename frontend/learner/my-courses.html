@@ -62,16 +62,16 @@
                 <div style="flex: 1;">
                   <h3>${course.title}</h3>
                   <p style="color: var(--gray); margin: 0.5rem 0;">${course.description || ''}</p>
-                  <p class="course-instructor">👨‍🏫 ${course.instructor.full_name}</p>
+                  <p class="course-instructor">Instructor: ${course.instructor.full_name}</p>
                   <div class="mt-2">
                     <span class="badge badge-${isCompleted ? 'success' : 'primary'}">
                       ${enrollment.status.replace('_', ' ').toUpperCase()}
                     </span>
-                    ${hasCertificate ? '<span class="badge badge-success ml-1">🏆 Certified</span>' : ''}
+                    ${hasCertificate ? '<span class="badge badge-success ml-1">Certified</span>' : ''}
                   </div>
                 </div>
                 <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                  <a href="/learner/course-view.html?id=${course.id}" class="btn btn-primary">View Materials →</a>
+                  <a href="/learner/course-view.html?id=${course.id}" class="btn btn-primary">View Materials</a>
                   ${!isCompleted ? `
                     <button class="btn btn-success" onclick="completeCourse(${course.id})">
                       Mark as Complete

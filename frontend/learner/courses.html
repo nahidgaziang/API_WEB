@@ -56,7 +56,7 @@
             <div class="flex justify-between items-center">
                 <div>
                     <h3 style="color: white;">Your Balance</h3>
-                    <p class="course-price" style="color: white; margin: 0;" id="balance">৳0.00</p>
+                    <p class="course-price" style="color: white; margin: 0;" id="balance">0.00 Tk</p>
                 </div>
                 <small style="color: rgba(255,255,255,0.9);" id="account-info">Loading...</small>
             </div>
@@ -67,7 +67,6 @@
         </div>
     </div>
 
-    <!-- Purchase Modal -->
     <div class="purchase-modal" id="purchaseModal">
         <div class="modal-content">
             <h3 class="mb-3">Purchase Course</h3>
@@ -106,17 +105,14 @@
 
         async function loadCourses() {
             try {
-                // Load balance
                 const balanceData = await API.bank.getBalance();
                 currentBalance = balanceData.data.balance;
-                document.getElementById('balance').textContent = `৳${currentBalance.toFixed(2)}`;
+                document.getElementById('balance').textContent = `${currentBalance.toFixed(2)} Tk`;
                 document.getElementById('account-info').textContent = `Account: ${balanceData.data.account_number}`;
 
-                // Load enrolled courses
                 const enrollmentsData = await API.learner.getMyEnrollments();
                 enrolledCourseIds = enrollmentsData.data.map(e => e.course_id);
 
-                // Load all courses
                 const coursesData = await API.learner.getAllCourses();
                 const coursesContainer = document.getElementById('courses-container');
 
@@ -132,14 +128,14 @@
             <div class="card course-card fade-in">
               <h3>${course.title}</h3>
               <p style="color: var(--gray); margin: 1rem 0;">${course.description || 'No description available.'}</p>
-              <p class="course-instructor">👨‍🏫 ${course.instructor.full_name}</p>
-              <p class="course-price mt-2">৳${parseFloat(course.price).toFixed(2)}</p>
+              <p class="course-instructor">Instructor: ${course.instructor.full_name}</p>
+              <p class="course-price mt-2">${parseFloat(course.price).toFixed(2)} Tk</p>
               ${isEnrolled
-                            ? '<span class="badge badge-success">Enrolled ✓</span>'
-                            : `<button class="btn btn-primary btn-block mt-2" onclick="openPurchaseModal(${course.id}, '${course.title}', ${course.price})">
-                     Enroll Now →
+                        ? '<span class="badge badge-success">Enrolled</span>'
+                        : `<button class="btn btn-primary btn-block mt-2" onclick="openPurchaseModal(${course.id}, '${course.title}', ${course.price})">
+                     Enroll Now
                    </button>`
-                        }
+                    }
             </div>
           `;
                 }).join('');
@@ -156,7 +152,7 @@
 
             document.getElementById('modal-course-id').value = courseId;
             document.getElementById('modal-course-title').textContent = title;
-            document.getElementById('modal-course-price').textContent = `৳${parseFloat(price).toFixed(2)}`;
+            document.getElementById('modal-course-price').textContent = `${parseFloat(price).toFixed(2)} Tk`;
             document.getElementById('purchase-secret').value = '';
             document.getElementById('modal-alert').innerHTML = '';
             document.getElementById('purchaseModal').classList.add('active');
@@ -182,7 +178,6 @@
                 closePurchaseModal();
                 showAlert('Course purchased successfully!', 'success');
 
-                // Reload courses
                 setTimeout(() => {
                     loadCourses();
                 }, 1000);

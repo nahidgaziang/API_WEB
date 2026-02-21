@@ -13,7 +13,7 @@
     <div class="navbar-brand">LMS</div>
     <ul class="navbar-menu">
       <li><a href="/learner/dashboard.html" class="navbar-link">Dashboard</a></li>
-      <li><a href="/learner/my-courses.html" class="navbar-link">← Back to My Courses</a></li>
+      <li><a href="/learner/my-courses.html" class="navbar-link">Back to My Courses</a></li>
       <li><span class="user-name" style="font-weight: 500;"></span></li>
       <li><a href="#" onclick="logout()" class="navbar-link">Logout</a></li>
     </ul>
@@ -37,7 +37,6 @@
     requireRole('learner');
     updateUIBasedOnAuth();
 
-    // Get course ID from URL
     const urlParams = new URLSearchParams(window.location.search);
     const courseId = urlParams.get('id');
 
@@ -48,7 +47,6 @@
 
     async function loadCourseMaterials() {
       try {
-        // Fetch enrollment data to get course info
         const enrollmentsData = await API.learner.getMyEnrollments();
         const enrollment = enrollmentsData.data.find(e => e.course.id == courseId);
 
@@ -57,7 +55,6 @@
           document.getElementById('course-description').textContent = enrollment.course.description || '';
         }
 
-        // Fetch materials
         const materialsData = await API.learner.getCourseMaterials(courseId);
         const materialsContainer = document.getElementById('materials-container');
 
@@ -67,15 +64,15 @@
         }
 
         materialsContainer.innerHTML = materialsData.data.map((material, index) => {
-          let icon = '📄';
-          if (material.type === 'video') icon = '🎥';
-          else if (material.type === 'audio') icon = '🎵';
-          else if (material.type === 'mcq') icon = '❓';
+          let typeLabel = 'TEXT';
+          if (material.type === 'video') typeLabel = 'VIDEO';
+          else if (material.type === 'audio') typeLabel = 'AUDIO';
+          else if (material.type === 'mcq') typeLabel = 'MCQ';
 
           return `
             <div class="card mb-3 fade-in course-card">
-              <h3>${icon} ${material.title}</h3>
-              <span class="badge badge-primary">${material.type.toUpperCase()}</span>
+              <h3>${material.title}</h3>
+              <span class="badge badge-primary">${typeLabel}</span>
               
               ${material.type === 'text' ? `
                 <div class="mt-2" style="white-space: pre-wrap; line-height: 1.8;">
@@ -85,10 +82,10 @@
               
               ${material.type === 'video' || material.type === 'audio' ? `
                 <div class="mt-2">
-                  <p style="color: var(--gray);">📎 Media URL: ${material.file_url || 'N/A'}</p>
+                  <p style="color: var(--gray);">Media URL: ${material.file_url || 'N/A'}</p>
                   ${material.file_url ? `
                     <a href="${material.file_url}" target="_blank" class="btn btn-primary mt-2">
-                      Open ${material.type} →
+                      Open ${material.type}
                     </a>
                   ` : ''}
                 </div>

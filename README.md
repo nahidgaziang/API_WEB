@@ -1,251 +1,380 @@
 # LMS - Learning Management System
 
-A comprehensive Learning Management System built with Node.js, Express, MySQL, and Vanilla JavaScript.
+A full-stack Learning Management System (LMS) built with **Node.js**, **Express**, **TypeScript**, **MySQL**, and **Vanilla JavaScript**. Supports learner and instructor workflows including course purchasing, material access, payment processing, and certificate generation.
 
-## 🎯 Features
+---
 
-### For Learners
-- **User Registration & Login** with role-based authentication
-- **Bank Account Setup** for course purchases
-- **Browse All Courses** (5 courses available)
-- **Purchase Courses** with secure payment processing
-- **Access Course Materials** (text, video, audio, MCQ)
-- **Complete Courses** and earn certificates
-- **View Certificates** with unique certificate codes
-- **Check Account Balance**
+## Table of Contents
 
-### For Instructors
-- **Upload Courses** and receive lump sum payment immediately
-- **Add Course Materials** (text, video, audio, MCQ quizzes)
-- **View Course Statistics**
-- **Claim Pending Payments** from course sales
-- **Check Account Balance**
+- [Features](#features)
+- [Architecture](#architecture)
+- [Quick Start with Docker](#quick-start-with-docker)
+- [Manual Setup (Local)](#manual-setup-local)
+- [Project Structure](#project-structure)
+- [API Reference](#api-reference)
+- [Test Accounts](#test-accounts)
+- [Transaction Flow](#transaction-flow)
+- [Troubleshooting](#troubleshooting)
 
-### For LMS Organization
-- Manage 5 courses across 3 instructors
-- Process learner enrollments
-- Facilitate instructor payments
-- Transaction management
+---
 
-## 🛠️ Technology Stack
+## Features
 
-- **Backend**: Node.js, Express, TypeScript
-- **Database**: MySQL (via XAMPP)
-- **ORM**: Sequelize
-- **Authentication**: JWT (JSON Web Tokens)
-- **Security**: bcrypt for password hashing
-- **Frontend**: HTML5, CSS3, Vanilla JavaScript
-- **API**: REST
+### Learner
 
-## 📋 Prerequisites
+- Register and login with JWT authentication
+- Setup bank account and check balance
+- Browse and purchase courses (secure payment)
+- Access course materials (text, video, audio, MCQ)
+- Mark courses complete and earn certificates
+- Download certificates with unique certificate codes
 
-- Node.js v18+ installed
-- XAMPP installed (MySQL running)
-- Git (optional)
+### Instructor
 
-## 🚀 Installation & Setup
+- Upload courses and receive lump-sum payment
+- Add course materials (text, video, audio, MCQ quizzes)
+- View pending course sale payments
+- Claim payments from learner course purchases
+- View account balance and course statistics
 
-### Step 1: Start XAMPP
-1. Open XAMPP Control Panel
-2. Start **MySQL** service
-3. Click **Admin** to open phpMyAdmin
+---
 
-### Step 2: Create Database
-1. In phpMyAdmin, click **New**
-2. Database name: `lms_system`
-3. Collation: `utf8mb4_general_ci`
-4. Click **Create**
+## Architecture
 
-### Step 3: Run Database Schema
-1. In phpMyAdmin, select `lms_system` database
-2. Go to **SQL** tab
-3. Copy entire content from `database/schema.sql`
-4. Paste and click **Go**
-5. Verify 7 tables are created
+```
+Browser → Nginx (port 8080) → Static files (HTML/CSS/JS)
+                            → /api/* proxy → Express API (port 5000) → MySQL (port 3307)
+```
 
-### Step 4: Seed Database with Sample Data
-1. Go to **SQL** tab again
-2. Copy entire content from `database/seed.sql`
-3. Paste and click **Go**
-4. Verify data is inserted
+| Service  | Technology        | Port (host) |
+| -------- | ----------------- | ----------- |
+| Frontend | Nginx (static)    | 8080        |
+| Backend  | Node.js / Express | 5000        |
+| Database | MySQL 8.0         | 3307        |
 
-### Step 5: Install Backend Dependencies
+---
+
+## Quick Start with Docker
+
+> **Requirements:** [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) installed.
+
+```bash
+git clone https://github.com/nahidgaziang/API_WEB.git
+cd API_WEB
+docker compose up -d
+```
+
+That's it. Docker will:
+
+1. Start a MySQL 8.0 container and auto-run `schema.sql` + `seed.sql`
+2. Build and start the backend Node.js API
+3. Build and start the frontend Nginx server
+
+Open **http://localhost:8080** in your browser.
+
+### Useful Docker Commands
+
+```bash
+# View running containers
+docker compose ps
+
+# View logs for a specific service
+docker logs lms-backend
+docker logs lms-frontend
+docker logs lms-db
+
+# Stop all containers
+docker compose down
+
+# Stop and delete all data (fresh start)
+docker compose down -v
+
+# Rebuild after code changes
+docker compose build --no-cache
+docker compose up -d
+```
+
+---
+
+## Manual Setup (Local)
+
+### Prerequisites
+
+- Node.js v18+
+- MySQL 8.0 (running locally)
+
+### Step 1: Clone the repository
+
+```bash
+git clone https://github.com/nahidgaziang/API_WEB.git
+cd API_WEB
+```
+
+### Step 2: Set up the database
+
+Run these commands in your terminal (requires `sudo` on Linux):
+
+```bash
+bash setup-db.sh
+```
+
+This script will:
+
+- Create a MySQL user `lms_user` with password `lms_password`
+- Create the `lms_system` database
+- Run `database/schema.sql` to create all tables
+- Run `database/seed.sql` to populate sample data
+
+> **Note:** If you are on a system where MySQL root uses a password, edit `setup-db.sh` to add `-p<your-password>` to the sudo mysql command.
+
+### Step 3: Configure the backend
+
+The `.env` file is already pre-configured for the default setup:
+
+```env
+PORT=5000
+DB_HOST=127.0.0.1
+DB_USER=lms_user
+DB_PASSWORD=lms_password
+DB_NAME=lms_system
+JWT_SECRET=your_jwt_secret
+JWT_EXPIRE=7d
+LMS_ACCOUNT_NUMBER=LMS1000000001
+LMS_INITIAL_BALANCE=1000000
+```
+
+### Step 4: Start the backend
+
 ```bash
 cd backend
 npm install
-```
-
-### Step 6: Start Backend Server
-```bash
 npm run dev
 ```
 
 You should see:
+
 ```
-✅ Database connection established successfully
-✅ Database models synchronized
-🚀 Server running on http://localhost:5000
+Database connection established successfully
+Database models synchronized
+Server running on http://localhost:5000
 ```
 
-### Step 7: Install Frontend Dependencies
-Open a new terminal:
+### Step 5: Update frontend API URL (for local development only)
+
+Open `frontend/js/api.js` and change:
+
+```js
+// For local dev (non-Docker):
+const API_BASE_URL = "http://localhost:5000/api";
+
+// For Docker (default):
+const API_BASE_URL = "/api";
+```
+
+### Step 6: Start the frontend
+
 ```bash
 cd frontend
 npm install
-```
-
-### Step 8: Start Frontend Dev Server
-```bash
 npm run dev
 ```
 
-The browser should automatically open at `http://localhost:8080`
+Open **http://localhost:8080** in your browser.
 
-## 📚 API Endpoints
+---
 
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login user
-- `GET /api/auth/profile` - Get user profile
-
-### Bank
-- `POST /api/bank/setup` - Setup bank account
-- `GET /api/bank/balance` - Get account balance
-- `POST /api/bank/transaction` - Process transaction
-
-### Learner
-- `GET /api/learner/courses` - Get all courses
-- `POST /api/learner/enroll` - Enroll in course
-- `GET /api/learner/my-courses` - Get enrolled courses
-- `GET /api/learner/courses/:id/materials` - Get course materials
-- `POST /api/learner/complete-course` - Mark course complete
-- `GET /api/learner/certificates` - Get certificates
-
-### Instructor
-- `POST /api/instructor/courses` - Upload new course
-- `POST /api/instructor/materials` - Upload materials
-- `GET /api/instructor/my-courses` - Get instructor courses
-- `GET /api/instructor/pending-transactions` - Get pending payments
-- `POST /api/instructor/claim-payment` - Claim payment
-
-## 🗄️ Database Structure
-
-### Tables
-1. **users** - All system users (learners, instructors, admin)
-2. **bank_accounts** - Bank accounts for transactions
-3. **courses** - 5 courses in the system
-4. **course_materials** - Text, video, audio, MCQ content
-5. **enrollments** - Learner course registrations
-6. **certificates** - Generated certificates
-7. **transactions** - All financial transactions
-
-## 💰 Transaction Flow
-
-### Learner Purchases Course
-1. Learner selects course (e.g., ৳799)
-2. Enters account secret
-3. System validates balance
-4. Deducts from learner account
-5. Adds to LMS account
-6. Creates enrollment record
-
-### Instructor Uploads Course
-1. Instructor creates course
-2. Sets upload payment (e.g., ৳2000)
-3. LMS immediately pays instructor
-4. Course becomes available to learners
-
-### Instructor Claims Course Sales Payment
-1. Course is sold to learner
-2. LMS creates transaction record
-3. Instructor validates transaction
-4. Enters account secret
-5. Payment transferred from LMS to instructor
-
-## 🎨 Project Structure
+## Project Structure
 
 ```
-WebProject2/
+API_WEB/
 ├── backend/
 │   ├── src/
-│   │   ├── config/        # Database & app config
-│   │   ├── models/        # Sequelize models
-│   │   ├── controllers/   # Business logic
-│   │   ├── routes/        # API routes
-│   │   ├── middleware/    # Auth & error handling
-│   │   ├── utils/         # Helper functions
-│   │   └── server.ts      # Express app
+│   │   ├── config/          # database.ts, config.ts
+│   │   ├── controllers/     # auth, bank, learner, instructor
+│   │   ├── middleware/      # auth.ts, roleCheck.ts, errorHandler.ts
+│   │   ├── models/          # Sequelize models (7 tables)
+│   │   ├── routes/          # auth, bank, learner, instructor routes
+│   │   ├── utils/           # jwt.ts, helpers.ts
+│   │   └── server.ts
+│   ├── Dockerfile
+│   ├── .env
 │   ├── package.json
 │   └── tsconfig.json
 ├── frontend/
 │   ├── css/
+│   │   └── style.css
 │   ├── js/
-│   ├── learner/          # Learner pages
-│   ├── instructor/       # Instructor pages
-│   └── *.html           # Main pages
-└── database/
-    ├── schema.sql        # Database structure
-    └── seed.sql          # Sample data
+│   │   ├── api.js           # all API request functions
+│   │   └── auth.js          # auth utilities & localStorage helpers
+│   ├── learner/             # 6 learner pages
+│   ├── instructor/          # 4 instructor pages
+│   ├── index.html
+│   ├── login.html
+│   ├── register.html
+│   ├── Dockerfile
+│   ├── nginx.conf
+│   └── package.json
+├── database/
+│   ├── schema.sql           # creates 7 tables
+│   └── seed.sql             # inserts sample users, courses, and transactions
+├── docker-compose.yml
+├── setup-db.sh              # one-command local DB setup
+└── README.md
 ```
-
-## 🐛 Troubleshooting
-
-### MySQL Connection Error
-**Problem:** `ER_ACCESS_DENIED_FOR_USER`  
-**Solution:** Check `DB_USER` and `DB_PASSWORD` in `backend/.env`
-
-### CORS Error
-**Problem:** `Access to fetch blocked by CORS`  
-**Solution:** Ensure backend has `app.use(cors())` configured
-
-### Port Already in Use
-**Problem:** `EADDRINUSE :::5000`  
-**Solution:**
-```bash
-lsof -i :5000
-kill -9 <PID>
-```
-
-### Frontend 404 Errors
-**Problem:** JavaScript files not loading  
-**Solution:** Ensure you're serving from `frontend` directory
-
-## ✅ Testing the System
-
-### Test 1: Learner Journey
-1. Register as learner
-2. Setup bank account (Account: LEARN999, Secret: test123, Balance: 10000)
-3. Browse courses
-4. Purchase "Web Development Fundamentals" (৳799)
-5. Access course materials
-6. Complete course
-7. View certificate
-
-### Test 2: Instructor Journey
-1. Login as instructor (`john_doe` / `instructor123`)
-2. Upload new course
-3. Add materials (text, video)
-4. View pending payments
-5. Claim payment with secret `mysecret`
-6. Check updated balance
-
-##  🔒 Security Features
-
-- **Password Hashing**: bcrypt (10 rounds)
-- **JWT Authentication**: Token-based auth with 7-day expiry
-- **Bank Secret Hashing**: Secure transaction authorization
-- **Role-Based Access Control**: Separate permissions for learners/instructors
-- **SQL Injection Protection**: Sequelize parameterized queries
-- **Database Transactions**: ACID-compliant payment processing
-
-## 📝 License
-
-This project is for educational purposes.
-
-## 👨‍💻 Author
-
-Built as part of an LMS project assignment.
 
 ---
 
-**Enjoy using the LMS! 🎓**
+## API Reference
+
+### Authentication
+
+| Method | Endpoint             | Description                    |
+| ------ | -------------------- | ------------------------------ |
+| POST   | `/api/auth/register` | Register a new user            |
+| POST   | `/api/auth/login`    | Login and receive JWT          |
+| GET    | `/api/auth/profile`  | Get authenticated user profile |
+
+### Bank
+
+| Method | Endpoint                | Description           |
+| ------ | ----------------------- | --------------------- |
+| POST   | `/api/bank/setup`       | Create a bank account |
+| GET    | `/api/bank/balance`     | Get account balance   |
+| POST   | `/api/bank/transaction` | Process a transaction |
+
+### Learner (requires auth + learner role)
+
+| Method | Endpoint                             | Description                     |
+| ------ | ------------------------------------ | ------------------------------- |
+| GET    | `/api/learner/courses`               | List all available courses      |
+| POST   | `/api/learner/enroll`                | Purchase and enroll in a course |
+| GET    | `/api/learner/my-courses`            | List enrolled courses           |
+| GET    | `/api/learner/courses/:id/materials` | Get course materials            |
+| POST   | `/api/learner/complete-course`       | Mark a course as complete       |
+| GET    | `/api/learner/certificates`          | List earned certificates        |
+
+### Instructor (requires auth + instructor role)
+
+| Method | Endpoint                               | Description                   |
+| ------ | -------------------------------------- | ----------------------------- |
+| POST   | `/api/instructor/courses`              | Upload a new course           |
+| POST   | `/api/instructor/materials`            | Add material to a course      |
+| GET    | `/api/instructor/my-courses`           | List instructor's courses     |
+| GET    | `/api/instructor/pending-transactions` | Get pending payments to claim |
+| POST   | `/api/instructor/claim-payment`        | Claim a pending payment       |
+
+---
+
+## Test Accounts
+
+Pre-seeded with the following accounts (all bank secrets are `mysecret`):
+
+### Instructors
+
+| Username   | Password      | Account    | Balance |
+| ---------- | ------------- | ---------- | ------- |
+| john_doe   | instructor123 | INST000002 | 5000 Tk |
+| jane_smith | instructor123 | INST000003 | 5000 Tk |
+| bob_wilson | instructor123 | INST000004 | 5000 Tk |
+
+### Learners
+
+| Username      | Password   | Account     | Balance  |
+| ------------- | ---------- | ----------- | -------- |
+| alice_brown   | learner123 | LEARN000005 | 10000 Tk |
+| charlie_davis | learner123 | LEARN000006 | 10000 Tk |
+| diana_evans   | learner123 | LEARN000007 | 10000 Tk |
+
+### Pre-loaded Courses
+
+| Title                        | Price   | Instructor       |
+| ---------------------------- | ------- | ---------------- |
+| Web Development Fundamentals | 799 Tk  | Dr. John Doe     |
+| Data Science with Python     | 999 Tk  | Prof. Jane Smith |
+| Machine Learning Basics      | 1299 Tk | Dr. John Doe     |
+| Mobile App Development       | 899 Tk  | Dr. Bob Wilson   |
+| Cloud Computing with AWS     | 1099 Tk | Prof. Jane Smith |
+
+---
+
+## Transaction Flow
+
+### Learner Purchases a Course
+
+1. Learner selects a course and enters bank account secret
+2. System deducts course price from learner's account
+3. Amount is added to the LMS organization account
+4. Enrollment is created
+5. A pending `instructor_payment` record is created for the instructor to claim
+
+### Instructor Uploads a Course
+
+1. Instructor fills in course details and upload payment amount
+2. LMS immediately transfers the upload payment to the instructor
+3. Course becomes available to all learners
+
+### Instructor Claims Course Sale Payment
+
+1. A pending payment appears on the instructor dashboard
+2. Instructor clicks "Claim" and enters bank account secret
+3. Payment is transferred from LMS to instructor's account
+
+---
+
+## Troubleshooting
+
+### Docker: Port already in use
+
+If port 8080 or 5000 is busy, edit `docker-compose.yml` and change the host port:
+
+```yaml
+ports:
+  - "9090:80" # change 8080 to any free port
+```
+
+### Docker: Database not seeding
+
+The SQL init scripts only run on a **fresh volume**. To force a re-seed:
+
+```bash
+docker compose down -v
+docker compose up -d
+```
+
+### Local: Access denied for MySQL
+
+Your system's MySQL root uses `auth_socket`. Run the setup script with sudo:
+
+```bash
+bash setup-db.sh
+```
+
+### Local: Backend not connecting
+
+Ensure the `.env` values match your MySQL setup and that the `lms_system` database exists.
+
+### CORS errors in browser
+
+Ensure the frontend is accessing the backend through the Nginx proxy (`/api/`) and not directly via a hardcoded localhost URL when running in Docker.
+
+---
+
+## Technology Stack
+
+| Layer            | Technology                                  |
+| ---------------- | ------------------------------------------- |
+| Language         | TypeScript (backend), JavaScript (frontend) |
+| Backend          | Node.js, Express.js                         |
+| ORM              | Sequelize                                   |
+| Database         | MySQL 8.0                                   |
+| Auth             | JWT (jsonwebtoken)                          |
+| Security         | bcrypt (password + secret hashing)          |
+| Frontend         | HTML5, CSS3, Vanilla JavaScript             |
+| Reverse Proxy    | Nginx                                       |
+| Containerization | Docker, Docker Compose                      |
+
+---
+
+## License
+
+This project is for educational purposes.

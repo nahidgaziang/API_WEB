@@ -3,12 +3,10 @@ import { User, BankAccount } from '../models';
 import { generateToken } from '../utils/jwt';
 import { AuthRequest } from '../middleware/auth';
 
-// Register a new user
 export const register = async (req: Request, res: Response): Promise<void> => {
     try {
         const { username, email, password, role, full_name } = req.body;
 
-        // Validation
         if (!username || !email || !password || !role || !full_name) {
             res.status(400).json({ success: false, message: 'All fields are required' });
             return;
@@ -19,7 +17,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
-        // Check if user already exists
         const existingUser = await User.findOne({
             where: { username },
         });
@@ -38,8 +35,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
-        // Store password as plain text (for educational purposes only)
-        // Create user
         const user = await User.create({
             username,
             email,
@@ -48,7 +43,6 @@ export const register = async (req: Request, res: Response): Promise<void> => {
             full_name,
         });
 
-        // Generate token
         const token = generateToken({
             id: user.id,
             username: user.username,
@@ -76,18 +70,15 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     }
 };
 
-// Login user
 export const login = async (req: Request, res: Response): Promise<void> => {
     try {
         const { username, password } = req.body;
 
-        // Validation
         if (!username || !password) {
             res.status(400).json({ success: false, message: 'Username and password are required' });
             return;
         }
 
-        // Find user
         const user = await User.findOne({ where: { username } });
 
         if (!user) {
@@ -95,16 +86,13 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
-        // Verify password (plain text comparison)
         if (password !== user.password) {
             res.status(401).json({ success: false, message: 'Invalid credentials' });
             return;
         }
 
-        // Check if user has bank account
         const bankAccount = await BankAccount.findOne({ where: { user_id: user.id } });
 
-        // Generate token
         const token = generateToken({
             id: user.id,
             username: user.username,
@@ -133,7 +121,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }
 };
 
-// Get current user profile
 export const getProfile = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const userId = req.user?.id;

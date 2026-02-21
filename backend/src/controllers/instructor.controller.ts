@@ -4,7 +4,6 @@ import { AuthRequest } from '../middleware/auth';
 import { config } from '../config/config';
 import sequelize from '../config/database';
 
-// Upload a new course
 export const uploadCourse = async (req: AuthRequest, res: Response): Promise<void> => {
     const transaction = await sequelize.transaction();
 
@@ -18,7 +17,6 @@ export const uploadCourse = async (req: AuthRequest, res: Response): Promise<voi
             return;
         }
 
-        // Check course limit (max 5 courses in system - as per requirements)
         const totalCourses = await Course.count();
         if (totalCourses >= 5) {
             await transaction.rollback();
@@ -29,7 +27,6 @@ export const uploadCourse = async (req: AuthRequest, res: Response): Promise<voi
             return;
         }
 
-        // Create course
         const course = await Course.create(
             {
                 title,
@@ -42,7 +39,6 @@ export const uploadCourse = async (req: AuthRequest, res: Response): Promise<voi
             { transaction }
         );
 
-        // Get instructor and LMS bank accounts
         const instructorBank = await BankAccount.findOne({
             where: { user_id: instructorId },
             lock: transaction.LOCK.UPDATE,
@@ -67,7 +63,6 @@ export const uploadCourse = async (req: AuthRequest, res: Response): Promise<voi
             return;
         }
 
-        // Check LMS has sufficient balance
         const uploadAmt = parseFloat(upload_payment);
         if (parseFloat(lmsBank.balance.toString()) < uploadAmt) {
             await transaction.rollback();
@@ -75,14 +70,12 @@ export const uploadCourse = async (req: AuthRequest, res: Response): Promise<voi
             return;
         }
 
-        // Transfer upload payment (LMS → Instructor)
         lmsBank.balance = parseFloat(lmsBank.balance.toString()) - uploadAmt;
         instructorBank.balance = parseFloat(instructorBank.balance.toString()) + uploadAmt;
 
         await lmsBank.save({ transaction });
         await instructorBank.save({ transaction });
 
-        // Create transaction record
         await Transaction.create(
             {
                 from_account: lmsBank.account_number,
@@ -114,7 +107,6 @@ export const uploadCourse = async (req: AuthRequest, res: Response): Promise<voi
     }
 };
 
-// Upload course materials
 export const uploadMaterial = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const instructorId = req.user?.id;
@@ -130,7 +122,6 @@ export const uploadMaterial = async (req: AuthRequest, res: Response): Promise<v
             return;
         }
 
-        // Verify ownership
         const course = await Course.findOne({
             where: { id: course_id, instructor_id: instructorId },
         });
@@ -140,7 +131,6 @@ export const uploadMaterial = async (req: AuthRequest, res: Response): Promise<v
             return;
         }
 
-        // Create material
         const material = await CourseMaterial.create({
             course_id,
             title,
@@ -161,7 +151,6 @@ export const uploadMaterial = async (req: AuthRequest, res: Response): Promise<v
     }
 };
 
-// Get instructor's courses
 export const getMyCourses = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const instructorId = req.user?.id;
@@ -186,7 +175,6 @@ export const getMyCourses = async (req: AuthRequest, res: Response): Promise<voi
     }
 };
 
-// Get pending transactions (instructor payments to claim)
 export const getPendingTransactions = async (req: AuthRequest, res: Response): Promise<void> => {
     try {
         const instructorId = req.user?.id;
@@ -217,7 +205,6 @@ export const getPendingTransactions = async (req: AuthRequest, res: Response): P
     }
 };
 
-// Claim payment (instructor validates and receives payment)
 export const claimPayment = async (req: AuthRequest, res: Response): Promise<void> => {
     const transaction = await sequelize.transaction();
 
@@ -231,7 +218,6 @@ export const claimPayment = async (req: AuthRequest, res: Response): Promise<voi
             return;
         }
 
-        // Get instructor bank account
         const instructorBank = await BankAccount.findOne({
             where: { user_id: instructorId },
             lock: transaction.LOCK.UPDATE,
@@ -244,14 +230,12 @@ export const claimPayment = async (req: AuthRequest, res: Response): Promise<voi
             return;
         }
 
-        // Verify secret (plain text comparison)
         if (secret !== instructorBank.secret) {
             await transaction.rollback();
             res.status(401).json({ success: false, message: 'Invalid secret' });
             return;
         }
 
-        // Get transaction
         const txn = await Transaction.findByPk(transaction_id, { transaction });
 
         if (!txn) {
@@ -272,7 +256,6 @@ export const claimPayment = async (req: AuthRequest, res: Response): Promise<voi
             return;
         }
 
-        // Get LMS bank
         const lmsBank = await BankAccount.findOne({
             where: { account_number: txn.from_account },
             lock: transaction.LOCK.UPDATE,
@@ -287,21 +270,18 @@ export const claimPayment = async (req: AuthRequest, res: Response): Promise<voi
 
         const amount = parseFloat(txn.amount.toString());
 
-        // Check LMS balance
         if (parseFloat(lmsBank.balance.toString()) < amount) {
             await transaction.rollback();
             res.status(400).json({ success: false, message: 'LMS has insufficient balance' });
             return;
         }
 
-        // Process payment
         lmsBank.balance = parseFloat(lmsBank.balance.toString()) - amount;
         instructorBank.balance = parseFloat(instructorBank.balance.toString()) + amount;
 
         await lmsBank.save({ transaction });
         await instructorBank.save({ transaction });
 
-        // Update transaction status
         txn.status = 'completed';
         txn.validated_at = new Date();
         txn.completed_at = new Date();

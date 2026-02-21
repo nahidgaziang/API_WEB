@@ -28,7 +28,7 @@
             </div>
 
             <div class="alert alert-info mb-3">
-                <strong>ℹ️ Note:</strong> You'll receive a lump sum payment immediately upon uploading your course.
+                <strong>Note:</strong> You'll receive a lump sum payment immediately upon uploading your course.
             </div>
 
             <div id="alert-container"></div>
@@ -47,13 +47,13 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Course Price (৳) *</label>
+                    <label class="form-label">Course Price (Tk) *</label>
                     <input type="number" class="form-input" id="price" required min="100" step="10" value="999"
                         placeholder="Set the price for learners">
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Upload Payment (৳) *</label>
+                    <label class="form-label">Upload Payment (Tk) *</label>
                     <input type="number" class="form-input" id="upload_payment" required min="500" step="100"
                         value="2000" placeholder="Amount you want to receive for uploading">
                     <small style="color: var(--gray);">You'll receive this amount immediately from LMS</small>
@@ -95,7 +95,7 @@
                 const response = await API.instructor.uploadCourse(courseData);
 
                 hideLoading();
-                showAlert(`Course uploaded successfully! You received ৳${response.data.payment_received}`, 'success');
+                showAlert(`Course uploaded successfully! You received ${response.data.payment_received} Tk`, 'success');
 
                 setTimeout(() => {
                     window.location.href = '/instructor/dashboard.html';

@@ -11,7 +11,6 @@ import { requireRole } from '../middleware/roleCheck';
 
 const router = Router();
 
-// All routes require authentication and instructor role
 router.use(authenticateToken);
 router.use(requireRole('instructor'));
 
