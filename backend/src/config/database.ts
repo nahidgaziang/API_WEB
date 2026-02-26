@@ -1,6 +1,5 @@
 import { Sequelize } from 'sequelize';
 import { config } from './config';
-
 const sequelize = new Sequelize(
     config.db.database,
     config.db.user,
@@ -18,5 +17,4 @@ const sequelize = new Sequelize(
         },
     }
 );
-
 export default sequelize;

@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LMS Admin Dashboard</title>
+    <meta name="description"
+        content="LMS Administrator dashboard — overview of instructors, courses, learners and transactions.">
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .stat-ring {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            flex-shrink: 0;
+        }
+        .stat-ring-blue {
+            background: rgba(14, 165, 233, 0.15);
+        }
+        .stat-ring-teal {
+            background: rgba(20, 184, 166, 0.15);
+        }
+        .stat-ring-green {
+            background: rgba(34, 197, 94, 0.15);
+        }
+        .stat-ring-amber {
+            background: rgba(245, 158, 11, 0.15);
+        }
+        .stat-ring-coral {
+            background: rgba(249, 115, 22, 0.15);
+        }
+        .kpi-card {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+        .kpi-info .kpi-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--dark);
+            line-height: 1;
+        }
+        .kpi-info .kpi-label {
+            color: var(--gray);
+            font-size: 0.88rem;
+            font-weight: 500;
+            margin-top: 0.25rem;
+        }
+        .course-slot-bar {
+            height: 8px;
+            background: rgba(14, 165, 233, 0.12);
+            border-radius: 999px;
+            margin-top: 0.75rem;
+            overflow: hidden;
+        }
+        .course-slot-fill {
+            height: 100%;
+            border-radius: 999px;
+            background: var(--gradient-primary);
+            transition: width 0.8s ease;
+        }
+        .instructor-panel {
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(12px);
+            overflow: hidden;
+            transition: var(--transition);
+            box-shadow: var(--shadow);
+        }
+        .instructor-panel:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-3px);
+        }
+        .instructor-header {
+            padding: 1.5rem 1.75rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.07), rgba(20, 184, 166, 0.05));
+            border-bottom: 1px solid var(--border);
+        }
+        .instructor-avatar {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: var(--gradient-card);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            color: white;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .instructor-info h3 {
+            margin: 0 0 0.2rem;
+            font-size: 1.05rem;
+        }
+        .instructor-info p {
+            margin: 0;
+            font-size: 0.85rem;
+            color: var(--gray);
+        }
+        .instructor-metrics {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .metric-block {
+            flex: 1;
+            padding: 1rem 1.25rem;
+            text-align: center;
+            border-right: 1px solid var(--border);
+        }
+        .metric-block:last-child {
+            border-right: none;
+        }
+        .metric-block .metric-val {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1;
+        }
+        .metric-block .metric-lbl {
+            font-size: 0.78rem;
+            color: var(--gray);
+            margin-top: 0.25rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .course-list-inner {
+            padding: 1rem 1.75rem 1.5rem;
+        }
+        .course-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.65rem 0;
+            border-bottom: 1px solid rgba(14, 165, 233, 0.07);
+            gap: 0.75rem;
+        }
+        .course-row:last-child {
+            border-bottom: none;
+        }
+        .course-row-title {
+            font-weight: 600;
+            font-size: 0.92rem;
+            color: var(--dark);
+            flex: 1;
+        }
+        .pill-group {
+            display: flex;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .txn-type-badge {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            font-weight: 600;
+        }
+        .txn-course_purchase {
+            background: rgba(14, 165, 233, 0.12);
+            color: #0284c7;
+        }
+        .txn-instructor_payment {
+            background: rgba(245, 158, 11, 0.13);
+            color: #b45309;
+        }
+        .txn-upload_payment {
+            background: rgba(34, 197, 94, 0.12);
+            color: #15803d;
+        }
+        .txn-completed {
+            background: rgba(34, 197, 94, 0.12);
+            color: #15803d;
+        }
+        .txn-pending {
+            background: rgba(245, 158, 11, 0.13);
+            color: #b45309;
+        }
+        .txn-failed {
+            background: rgba(239, 68, 68, 0.12);
+            color: #dc2626;
+        }
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .balance-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: var(--gradient-card);
+            color: white;
+            border-radius: 999px;
+            padding: 0.55rem 1.4rem;
+            font-weight: 700;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 16px rgba(14, 165, 233, 0.35);
+        }
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--gray);
+        }
+        .empty-state .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="blob-mint"></div>
+    <nav class="navbar">
+        <div class="navbar-brand">🏛️ LMS Admin</div>
+        <ul class="navbar-menu">
+            <li><a href="#overview" class="navbar-link">Overview</a></li>
+            <li><a href="#management" class="navbar-link">Management</a></li>
+            <li><a href="#instructors" class="navbar-link">Instructors</a></li>
+            <li><a href="#transactions" class="navbar-link">Transactions</a></li>
+            <li><span class="user-name" style="font-weight:600; color:var(--primary);"></span></li>
+            <li><a href="#" onclick="logout()" class="navbar-link">Logout</a></li>
+        </ul>
+    </nav>
+    <div class="container" style="margin-top:2rem;">
+        <div class="flex justify-between items-center mb-4" style="flex-wrap:wrap; gap:1rem;">
+            <div>
+                <h1 style="margin-bottom:0.25rem;">Admin Dashboard</h1>
+                <p style="margin:0;">LMS Organisation Overview &amp; Management</p>
+            </div>
+            <div id="lms-balance-pill">
+                <div class="spinner" style="width:28px;height:28px;margin:0;"></div>
+            </div>
+        </div>
+        <div class="grid grid-3 mb-4" id="overview">
+            <div class="card kpi-card" id="kpi-courses">
+                <div class="stat-ring stat-ring-blue">📚</div>
+                <div class="kpi-info">
+                    <div class="kpi-value" id="kpi-total-courses">—</div>
+                    <div class="kpi-label">Total Courses</div>
+                    <div class="course-slot-bar">
+                        <div class="course-slot-fill" id="course-slot-bar" style="width:0%"></div>
+                    </div>
+                    <small style="color:var(--gray); font-size:0.78rem;" id="kpi-slots-left"></small>
+                </div>
+            </div>
+            <div class="card kpi-card">
+                <div class="stat-ring stat-ring-teal">🎓</div>
+                <div class="kpi-info">
+                    <div class="kpi-value" id="kpi-instructors">—</div>
+                    <div class="kpi-label">Instructors</div>
+                </div>
+            </div>
+            <div class="card kpi-card">
+                <div class="stat-ring stat-ring-green">👩‍🎓</div>
+                <div class="kpi-info">
+                    <div class="kpi-value" id="kpi-learners">—</div>
+                    <div class="kpi-label">Registered Learners</div>
+                </div>
+            </div>
+            <div class="card kpi-card">
+                <div class="stat-ring stat-ring-amber">📝</div>
+                <div class="kpi-info">
+                    <div class="kpi-value" id="kpi-enrollments">—</div>
+                    <div class="kpi-label">Total Enrollments</div>
+                </div>
+            </div>
+            <div class="card kpi-card">
+                <div class="stat-ring stat-ring-coral">⏳</div>
+                <div class="kpi-info">
+                    <div class="kpi-value" id="kpi-pending">—</div>
+                    <div class="kpi-label">Pending Payments</div>
+                </div>
+            </div>
+            <div class="card kpi-card">
+                <div class="stat-ring stat-ring-green">🏆</div>
+                <div class="kpi-info">
+                    <div class="kpi-value" id="kpi-completed">—</div>
+                    <div class="kpi-label">Completed Courses</div>
+                </div>
+            </div>
+        </div>
+        <div class="grid grid-2 mb-4" id="management">
+            <div class="card">
+                <div class="section-title">📋 Manage Topics</div>
+                <div id="topic-alert-container"></div>
+                <form id="addTopicForm" style="margin-bottom:1.25rem;">
+                    <div class="form-group">
+                        <label class="form-label">Topic Name *</label>
+                        <input type="text" class="form-input" id="topicName" required placeholder="e.g. Graphic Design">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-textarea" id="topicDescription" rows="2"
+                            placeholder="Brief description of the topic..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="btn-add-topic">Add Topic</button>
+                </form>
+                <div id="topics-list">
+                    <div class="spinner" style="width:24px;height:24px;"></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="section-title">🎓 Register Instructor</div>
+                <div id="instructor-alert-container"></div>
+                <form id="addInstructorForm">
+                    <div class="form-group">
+                        <label class="form-label">Full Name *</label>
+                        <input type="text" class="form-input" id="instFullName" required placeholder="Jane Doe">
+                    </div>
+                    <div class="form-group" style="display:flex; gap:1rem;">
+                        <div style="flex:1;">
+                            <label class="form-label">Username *</label>
+                            <input type="text" class="form-input" id="instUsername" required placeholder="janedoe">
+                        </div>
+                        <div style="flex:1;">
+                            <label class="form-label">Email *</label>
+                            <input type="email" class="form-input" id="instEmail" required
+                                placeholder="jane@example.com">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password *</label>
+                        <input type="password" class="form-input" id="instPassword" required
+                            placeholder="Secure password">
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="btn-add-instructor">Register Instructor</button>
+                </form>
+            </div>
+        </div>
+        <div class="card mb-4" id="instructors">
+            <div class="section-title">🎓 Instructor Overview</div>
+            <div id="instructor-list">
+                <div class="spinner"></div>
+            </div>
+        </div>
+        <div class="card" id="transactions">
+            <div class="flex justify-between items-center mb-3" style="flex-wrap:wrap; gap:0.5rem;">
+                <div class="section-title" style="margin:0;">💳 Recent Transactions</div>
+                <button class="btn btn-outline" onclick="loadTransactions()"
+                    style="font-size:0.85rem; padding:0.5rem 1.1rem;">🔄 Refresh</button>
+            </div>
+            <div id="transaction-list">
+                <div class="spinner"></div>
+            </div>
+        </div>
+    </div>
+    <script src="/js/api.js"></script>
+    <script src="/js/auth.js"></script>
+    <script>
+        requireRole('lms_admin');
+        updateUIBasedOnAuth();
+        function initials(name) {
+            return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+        }
+        function formatTk(amount) {
+            return parseFloat(amount).toFixed(2) + ' Tk';
+        }
+        function formatDate(str) {
+            if (!str) return '—';
+            return new Date(str).toLocaleString();
+        }
+        async function loadLmsBalance() {
+            try {
+                const res = await API.admin.getBalance();
+                document.getElementById('lms-balance-pill').innerHTML = `
+                    <div class="balance-pill">
+                        💳 LMS Balance: <strong>${formatTk(res.data.balance)}</strong>
+                        <small style="opacity:0.8; font-size:0.78rem;">${res.data.account_number}</small>
+                    </div>`;
+            } catch (e) {
+                document.getElementById('lms-balance-pill').innerHTML =
+                    `<span class="badge badge-danger">Balance unavailable</span>`;
+            }
+        }
+        async function loadSystemStats() {
+            try {
+                const res = await API.admin.getSystemStats();
+                const d = res.data;
+                document.getElementById('kpi-total-courses').textContent = d.total_courses;
+                document.getElementById('kpi-instructors').textContent = d.total_instructors;
+                document.getElementById('kpi-learners').textContent = d.total_learners;
+                document.getElementById('kpi-enrollments').textContent = d.total_enrollments;
+                document.getElementById('kpi-pending').textContent = d.pending_enrollments;
+                document.getElementById('kpi-completed').textContent = d.completed_enrollments;
+                const pct = Math.round((d.total_courses / 5) * 100);
+                document.getElementById('course-slot-bar').style.width = pct + '%';
+            } catch (e) {
+                handleAPIError(e);
+            }
+        }
+        async function loadInstructors() {
+            const container = document.getElementById('instructor-list');
+            try {
+                const res = await API.admin.getInstructorStats();
+                const instructors = res.data;
+                if (instructors.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">🎓</div>
+                            <p>No instructors found.</p>
+                        </div>`;
+                    return;
+                }
+                container.innerHTML = `<div class="grid grid-2">${instructors.map(inst => {
+                    const bankInfo = inst.bank_account
+                        ? `<span class="badge badge-success">Account: ${inst.bank_account.account_number}</span>
+                           <span class="badge badge-primary">Balance: ${formatTk(inst.bank_account.balance)}</span>`
+                        : `<span class="badge badge-danger">No bank account</span>`;
+                    const courseRows = inst.courses.length > 0
+                        ? inst.courses.map(c => `
+                            <div class="course-row">
+                                <span class="course-row-title">${c.title}</span>
+                                <div class="pill-group">
+                                    <span class="badge badge-teal">👩‍🎓 ${c.learner_count} learner${c.learner_count !== 1 ? 's' : ''}</span>
+                                    <span class="badge badge-primary">📁 ${c.material_count} material${c.material_count !== 1 ? 's' : ''}</span>
+                                    <span class="badge badge-success">${formatTk(c.price)}</span>
+                                    <span class="badge badge-${c.status === 'active' ? 'success' : 'warning'}">${c.status}</span>
+                                </div>
+                            </div>`).join('')
+                        : `<p style="color:var(--gray); padding:0.75rem 0; margin:0;">No courses uploaded yet.</p>`;
+                    return `
+                    <div class="instructor-panel fade-in">
+                        <div class="instructor-header">
+                            <div class="instructor-avatar">${initials(inst.full_name)}</div>
+                            <div class="instructor-info">
+                                <h3>${inst.full_name}</h3>
+                                <p>@${inst.username} · ${inst.email}</p>
+                                <div class="pill-group mt-1">${bankInfo}</div>
+                            </div>
+                            <button onclick="removeInstructor(${inst.id}, '${inst.full_name.replace(/'/g, `\\'`)}')" style="margin-left:auto; flex-shrink:0; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#dc2626; border-radius:var(--radius); padding:0.4rem 0.85rem; font-size:0.8rem; font-weight:600; cursor:pointer;" title="Remove instructor">🗑 Remove</button>
+                        </div>
+                        <div class="instructor-metrics">
+                            <div class="metric-block">
+                                <div class="metric-val">${inst.total_courses}</div>
+                                <div class="metric-lbl">Courses</div>
+                            </div>
+                            <div class="metric-block">
+                                <div class="metric-val">${inst.total_learners}</div>
+                                <div class="metric-lbl">Total Learners</div>
+                            </div>
+                            <div class="metric-block">
+                                <div class="metric-val">${inst.active_learners}</div>
+                                <div class="metric-lbl">Active Learners</div>
+                            </div>
+                        </div>
+                        <div class="course-list-inner">
+                            <p style="font-size:0.8rem; font-weight:600; color:var(--gray); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:0.5rem;">Courses</p>
+                            ${courseRows}
+                        </div>
+                    </div>`;
+                }).join('')}</div>`;
+            } catch (e) {
+                container.innerHTML = `<p style="color:var(--danger);">Failed to load instructors.</p>`;
+                handleAPIError(e);
+            }
+        }
+        async function loadTransactions() {
+            const container = document.getElementById('transaction-list');
+            container.innerHTML = '<div class="spinner"></div>';
+            try {
+                const res = await API.admin.getAllTransactions();
+                const txns = res.data;
+                if (txns.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">💳</div>
+                            <p>No transactions yet.</p>
+                        </div>`;
+                    return;
+                }
+                container.innerHTML = `
+                <div style="overflow-x:auto;">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>#ID</th>
+                            <th>Type</th>
+                            <th>From Account</th>
+                            <th>To Account</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${txns.map(t => `
+                        <tr>
+                            <td><strong>#${t.id}</strong></td>
+                            <td><span class="txn-type-badge txn-${t.transaction_type}">${t.transaction_type.replace(/_/g, ' ')}</span></td>
+                            <td style="font-family:monospace; font-size:0.85rem;">${t.from_account}</td>
+                            <td style="font-family:monospace; font-size:0.85rem;">${t.to_account}</td>
+                            <td><strong>${formatTk(t.amount)}</strong></td>
+                            <td><span class="txn-type-badge txn-${t.status}">${t.status}</span></td>
+                            <td style="font-size:0.82rem; color:var(--gray);">${formatDate(t.created_at)}</td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table>
+                </div>`;
+            } catch (e) {
+                container.innerHTML = `<p style="color:var(--danger);">Failed to load transactions.</p>`;
+                handleAPIError(e);
+            }
+        }
+        document.getElementById('addTopicForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-add-topic');
+            const alertContainer = document.getElementById('topic-alert-container');
+            const name = document.getElementById('topicName').value.trim();
+            const description = document.getElementById('topicDescription').value.trim();
+            if (!name) return;
+            btn.disabled = true;
+            btn.textContent = 'Adding...';
+            alertContainer.innerHTML = '';
+            try {
+                await API.admin.addTopic({ name, description });
+                alertContainer.innerHTML = `<div class="alert alert-success">Topic '${name}' added successfully!</div>`;
+                document.getElementById('addTopicForm').reset();
+                loadTopicsList();
+            } catch (err) {
+                alertContainer.innerHTML = `<div class="alert alert-error">${err.message || 'Failed to add topic'}</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Add Topic';
+                setTimeout(() => { alertContainer.innerHTML = ''; }, 3000);
+            }
+        });
+        async function loadTopicsList() {
+            const container = document.getElementById('topics-list');
+            try {
+                const res = await API.public.getTopics();
+                const topics = res.data;
+                if (topics.length === 0) {
+                    container.innerHTML = '<p style="color:var(--gray); font-size:0.88rem;">No active topics yet.</p>';
+                    return;
+                }
+                container.innerHTML = `
+                    <p style="font-size:0.78rem; font-weight:600; color:var(--gray); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:0.6rem;">Active Topics</p>
+                    <div style="display:flex; flex-direction:column; gap:0.5rem;">
+                        ${topics.map(t => `
+                        <div style="display:flex; align-items:center; justify-content:space-between; padding:0.55rem 0.75rem; background:rgba(14,165,233,0.05); border:1px solid var(--border); border-radius:var(--radius);">
+                            <span style="font-weight:600; font-size:0.9rem;">${t.name}</span>
+                            <button onclick="removeTopic(${t.id}, '${t.name.replace(/'/g, `\\'`)}')"
+                                style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#dc2626; border-radius:var(--radius); padding:0.25rem 0.65rem; font-size:0.75rem; font-weight:600; cursor:pointer;">
+                                🗑 Remove
+                            </button>
+                        </div>`).join('')}
+                    </div>`;
+            } catch (err) {
+                container.innerHTML = '<p style="color:var(--danger); font-size:0.85rem;">Failed to load topics.</p>';
+            }
+        }
+        async function removeTopic(id, name) {
+            if (!confirm(`Deactivate topic "${name}"? Instructors won't be able to upload new courses with this topic.`)) return;
+            try {
+                await API.admin.removeTopic(id);
+                loadTopicsList();
+            } catch (err) {
+                alert('Failed to remove topic: ' + (err.message || 'Unknown error'));
+            }
+        }
+        async function removeInstructor(id, name) {
+            if (!confirm(`Remove instructor "${name}"? This will permanently delete their account and all associated data.`)) return;
+            try {
+                await API.admin.removeInstructor(id);
+                loadInstructors();
+                loadSystemStats();
+            } catch (err) {
+                alert('Failed to remove instructor: ' + (err.message || 'Unknown error'));
+            }
+        }
+        document.getElementById('addInstructorForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-add-instructor');
+            const alertContainer = document.getElementById('instructor-alert-container');
+            const full_name = document.getElementById('instFullName').value.trim();
+            const username = document.getElementById('instUsername').value.trim();
+            const email = document.getElementById('instEmail').value.trim();
+            const password = document.getElementById('instPassword').value;
+            if (!full_name || !username || !email || !password) return;
+            btn.disabled = true;
+            btn.textContent = 'Registering...';
+            alertContainer.innerHTML = '';
+            try {
+                await API.admin.addInstructor({ full_name, username, email, password });
+                alertContainer.innerHTML = `<div class="alert alert-success">Instructor '${full_name}' registered successfully!</div>`;
+                document.getElementById('addInstructorForm').reset();
+                loadInstructors();
+                loadSystemStats();
+            } catch (err) {
+                alertContainer.innerHTML = `<div class="alert alert-error">${err.message || 'Failed to register instructor'}</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Register Instructor';
+                setTimeout(() => { alertContainer.innerHTML = ''; }, 4000);
+            }
+        });
+        loadLmsBalance();
+        loadSystemStats();
+        loadInstructors();
+        loadTransactions();
+        loadTopicsList();
+    </script>
+</body>
+</html>

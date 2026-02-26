@@ -1,6 +1,5 @@
 import { DataTypes, Model } from 'sequelize';
 import sequelize from '../config/database';
-
 export interface CourseMaterialAttributes {
     id?: number;
     course_id: number;
@@ -11,7 +10,6 @@ export interface CourseMaterialAttributes {
     order_index?: number;
     created_at?: Date;
 }
-
 class CourseMaterial extends Model<CourseMaterialAttributes> implements CourseMaterialAttributes {
     public id!: number;
     public course_id!: number;
@@ -22,7 +20,6 @@ class CourseMaterial extends Model<CourseMaterialAttributes> implements CourseMa
     public order_index!: number;
     public readonly created_at!: Date;
 }
-
 CourseMaterial.init(
     {
         id: {
@@ -61,5 +58,4 @@ CourseMaterial.init(
         updatedAt: false,
     }
 );
-
 export default CourseMaterial;

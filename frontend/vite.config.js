@@ -1,10 +1,12 @@
 import { defineConfig } from 'vite';
-
 export default defineConfig({
     server: {
         port: 8080,
         open: true,
-        cors: true
+        cors: true,
+        proxy: {
+            '/api': 'http://localhost:5000'
+        }
     },
     build: {
         outDir: 'dist',
@@ -23,6 +25,7 @@ export default defineConfig({
                 instructorUploadCourse: './instructor/upload-course.html',
                 instructorUploadMaterials: './instructor/upload-materials.html',
                 instructorBankSetup: './instructor/bank-setup.html',
+                adminDashboard: './admin/dashboard.html',
             }
         }
     }

@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bank Setup - LMS</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
-
 <body>
     <nav class="navbar">
         <div class="navbar-brand">LMS</div>
@@ -16,72 +14,57 @@
             <li><a href="#" onclick="logout()" class="navbar-link">Logout</a></li>
         </ul>
     </nav>
-
     <div class="container-sm" style="margin-top: 3rem;">
         <div class="card">
             <div class="card-header">
                 <h2 class="card-title">Setup Your Bank Account</h2>
                 <p>Before you can purchase courses, please setup your bank account information</p>
             </div>
-
             <div class="alert alert-info mb-3">
                 <strong>Info:</strong> Your account secret is used to authorize transactions. Keep it safe!
             </div>
-
             <div id="alert-container"></div>
-
             <form id="bankSetupForm">
                 <div class="form-group">
                     <label class="form-label">Account Number</label>
                     <input type="text" class="form-input" id="account_number" required placeholder="e.g., LEARN000001">
                     <small style="color: var(--gray);">Use a unique account number</small>
                 </div>
-
                 <div class="form-group">
                     <label class="form-label">Account Secret (Password for transactions)</label>
                     <input type="password" class="form-input" id="secret" required minlength="6">
                     <small style="color: var(--gray);">You'll need this for purchases</small>
                 </div>
-
                 <div class="form-group">
                     <label class="form-label">Initial Balance (Tk)</label>
                     <input type="number" class="form-input" id="initial_balance" value="10000" min="1000" step="100"
                         required>
                     <small style="color: var(--gray);">Minimum: 1000 Tk</small>
                 </div>
-
                 <button type="submit" class="btn btn-primary btn-block">Setup Account</button>
             </form>
         </div>
     </div>
-
     <script src="/js/api.js"></script>
     <script src="/js/auth.js"></script>
     <script>
         requireRole('learner');
         updateUIBasedOnAuth();
-
         const bankSetupForm = document.getElementById('bankSetupForm');
         const alertContainer = document.getElementById('alert-container');
-
         bankSetupForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-
             const accountData = {
                 account_number: document.getElementById('account_number').value.trim(),
                 secret: document.getElementById('secret').value,
                 initial_balance: parseFloat(document.getElementById('initial_balance').value),
             };
-
             alertContainer.innerHTML = '';
             showLoading('Setting up your account...');
-
             try {
                 await API.bank.setupAccount(accountData);
-
                 hideLoading();
                 showAlert('Bank account setup successful!', 'success');
-
                 setTimeout(() => {
                     window.location.href = '/learner/dashboard.html';
                 }, 1500);
@@ -96,5 +79,4 @@
         });
     </script>
 </body>
-
 </html>

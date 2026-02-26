@@ -6,20 +6,17 @@ import {
     getCourseMaterials,
     completeCourse,
     getMyCertificates,
+    topUpBalance,
 } from '../controllers/learner.controller';
 import { authenticateToken } from '../middleware/auth';
 import { requireRole } from '../middleware/roleCheck';
-
 const router = Router();
-
 router.use(authenticateToken);
-
 router.get('/courses', getAllCourses);
 router.get('/courses/:courseId/materials', getCourseMaterials);
-
 router.post('/enroll', requireRole('learner'), enrollInCourse);
 router.get('/my-courses', requireRole('learner'), getMyEnrollments);
 router.post('/complete-course', requireRole('learner'), completeCourse);
 router.get('/certificates', requireRole('learner'), getMyCertificates);
-
+router.post('/topup', requireRole('learner'), topUpBalance);
 export default router;

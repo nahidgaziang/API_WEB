@@ -1,6 +1,5 @@
 import { DataTypes, Model } from 'sequelize';
 import sequelize from '../config/database';
-
 export interface UserAttributes {
     id?: number;
     username: string;
@@ -11,7 +10,6 @@ export interface UserAttributes {
     created_at?: Date;
     updated_at?: Date;
 }
-
 class User extends Model<UserAttributes> implements UserAttributes {
     public id!: number;
     public username!: string;
@@ -22,7 +20,6 @@ class User extends Model<UserAttributes> implements UserAttributes {
     public readonly created_at!: Date;
     public readonly updated_at!: Date;
 }
-
 User.init(
     {
         id: {
@@ -61,5 +58,4 @@ User.init(
         updatedAt: 'updated_at',
     }
 );
-
 export default User;

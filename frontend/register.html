@@ -1,78 +1,201 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - LMS</title>
     <link rel="stylesheet" href="/css/style.css">
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: stretch;
+        }
+        .auth-wrapper {
+            display: flex;
+            width: 100%;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+        .auth-left {
+            flex: 1;
+            background: linear-gradient(145deg, #34d399 0%, #0ea5e9 60%, #0284c7 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 3rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .auth-left::before {
+            content: '';
+            position: absolute;
+            width: 380px;
+            height: 380px;
+            background: rgba(255, 255, 255, 0.07);
+            border-radius: 50%;
+            top: -80px;
+            right: -80px;
+            animation: blobDrift2 16s ease-in-out infinite alternate;
+        }
+        .auth-left::after {
+            content: '';
+            position: absolute;
+            width: 280px;
+            height: 280px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 50%;
+            bottom: -60px;
+            left: -60px;
+            animation: blobDrift1 20s ease-in-out infinite alternate;
+        }
+        .auth-left-brand {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: white;
+            letter-spacing: -0.04em;
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+        .auth-left-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.95);
+            margin-bottom: 0.75rem;
+            position: relative;
+            z-index: 1;
+        }
+        .auth-left-sub {
+            color: rgba(255, 255, 255, 0.75);
+            font-size: 1rem;
+            max-width: 280px;
+            line-height: 1.65;
+            position: relative;
+            z-index: 1;
+            margin: 0;
+        }
+        .auth-left-features {
+            margin-top: 2.5rem;
+            list-style: none;
+            position: relative;
+            z-index: 1;
+            text-align: left;
+        }
+        .auth-left-features li {
+            color: rgba(255, 255, 255, 0.88);
+            font-size: 0.95rem;
+            font-weight: 500;
+            padding: 0.4rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .auth-left-features li::before {
+            content: '✦';
+            color: #fde68a;
+            font-size: 0.8rem;
+        }
+        .auth-right {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 2rem;
+        }
+        .auth-form-box {
+            width: 100%;
+            max-width: 440px;
+        }
+        .auth-form-box h2 {
+            font-size: 1.9rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+        }
+        .auth-form-box .auth-sub {
+            color: #64748b;
+            margin-bottom: 2rem;
+        }
+        .divider {
+            border: none;
+            border-top: 1px solid rgba(14, 165, 233, 0.12);
+            margin: 1.5rem 0;
+        }
+        @media (max-width: 768px) {
+            .auth-left {
+                display: none;
+            }
+            .auth-right {
+                padding: 2rem 1rem;
+            }
+        }
+    </style>
 </head>
-
 <body>
-    <div class="container-sm" style="margin-top: 3rem;">
-        <div class="card">
-            <div class="card-header text-center">
-                <h2 class="card-title">Create an Account</h2>
-                <p>Join our learning community today</p>
-            </div>
-
-            <div id="alert-container"></div>
-
-            <form id="registerForm">
-                <div class="form-group">
-                    <label class="form-label">Full Name</label>
-                    <input type="text" class="form-input" id="full_name" required>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Email</label>
-                    <input type="email" class="form-input" id="email" required>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Username</label>
-                    <input type="text" class="form-input" id="username" required>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Password</label>
-                    <input type="password" class="form-input" id="password" required minlength="6">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">I am a</label>
-                    <select class="form-select" id="role" required>
-                        <option value="">Select role...</option>
-                        <option value="learner">Learner (Student)</option>
-                        <option value="instructor">Instructor (Teacher)</option>
-                    </select>
-                </div>
-
-                <button type="submit" class="btn btn-primary btn-block">Create Account</button>
-            </form>
-
-            <div class="text-center mt-3">
-                <p style="color: var(--gray);">
+    <div class="blob-mint"></div>
+    <div class="auth-wrapper">
+        <div class="auth-left">
+            <div class="auth-left-brand">⚡ LMS</div>
+            <h2 class="auth-left-title">Join Our Community!</h2>
+            <p class="auth-left-sub">Start your learning adventure today — it only takes a minute to get started.</p>
+            <ul class="auth-left-features">
+                <li>Enroll in expert-led courses</li>
+                <li>Earn verified certificates</li>
+                <li>Teach and upload your own courses</li>
+                <li>Manage earnings in your wallet</li>
+            </ul>
+        </div>
+        <div class="auth-right">
+            <div class="auth-form-box fade-in">
+                <h2>Create Account</h2>
+                <p class="auth-sub">Join our learning community today</p>
+                <div id="alert-container"></div>
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" class="form-input" id="full_name" placeholder="Your full name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" id="email" placeholder="you@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="form-input" id="username" placeholder="Choose a username" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-input" id="password" placeholder="Min. 6 characters" required
+                            minlength="6">
+                    </div>
+                    <input type="hidden" id="role" value="learner">
+                    <button type="submit" class="btn btn-primary btn-block" style="padding: 0.9rem; font-size: 1rem;">
+                        Create Account →
+                    </button>
+                </form>
+                <hr class="divider">
+                <p class="text-center" style="color: #64748b; margin: 0;">
                     Already have an account?
-                    <a href="/login.html" style="color: var(--primary); font-weight: 500;">Login here</a>
+                    <a href="/login.html" style="color: #0ea5e9; font-weight: 600; text-decoration: none;">Sign in
+                        here</a>
                 </p>
             </div>
         </div>
     </div>
-
     <script src="/js/api.js"></script>
     <script src="/js/auth.js"></script>
     <script>
         if (isLoggedIn()) {
             redirectToDashboard();
         }
-
         const registerForm = document.getElementById('registerForm');
         const alertContainer = document.getElementById('alert-container');
-
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-
             const formData = {
                 full_name: document.getElementById('full_name').value.trim(),
                 email: document.getElementById('email').value.trim(),
@@ -80,24 +203,14 @@
                 password: document.getElementById('password').value,
                 role: document.getElementById('role').value,
             };
-
-            if (!formData.role) {
-                alertContainer.innerHTML = '<div class="alert alert-error">Please select a role</div>';
-                return;
-            }
-
             alertContainer.innerHTML = '';
             showLoading('Creating account...');
-
             try {
                 const response = await API.auth.register(formData);
-
                 API.setToken(response.data.token);
                 setUser(response.data.user);
-
                 hideLoading();
                 showAlert('Registration successful! Redirecting...', 'success');
-
                 setTimeout(() => {
                     window.location.href = `/${formData.role}/bank-setup.html`;
                 }, 1000);
@@ -112,5 +225,4 @@
         });
     </script>
 </body>
-
 </html>

@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Instructor Dashboard - LMS</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
-
 <body>
     <nav class="navbar">
         <div class="navbar-brand">LMS</div>
@@ -19,58 +17,49 @@
             <li><a href="#" onclick="logout()" class="navbar-link">Logout</a></li>
         </ul>
     </nav>
-
     <div class="container" style="margin-top: 2rem;">
         <h1 class="mb-3">Instructor Dashboard</h1>
-
         <div class="grid grid-3 mb-4">
-            <div class="card" style="background: var(--gradient-primary); color: white;">
-                <h3 style="color: white;">Account Balance</h3>
+            <div class="card" style="background: var(--gradient-card); color: white;">
+                <h3 style="color: white;">💳 Account Balance</h3>
                 <p class="course-price" style="color: white; margin: 1rem 0;" id="balance">0.00 Tk</p>
                 <small style="color: rgba(255,255,255,0.9);" id="account-number">Account: ---</small>
             </div>
-
-            <div class="card">
-                <h3>My Courses</h3>
-                <p class="course-price" id="course-count">0</p>
-                <small style="color: var(--gray);">Courses uploaded</small>
+            <div class="card" style="background: var(--gradient-teal); color: white;">
+                <h3 style="color: white;">📖 My Courses</h3>
+                <p class="course-price" style="color: white; margin: 1rem 0;" id="course-count">0</p>
+                <small style="color: rgba(255,255,255,0.9);">Courses uploaded</small>
             </div>
-
-            <div class="card">
-                <h3>Pending Payments</h3>
-                <p class="course-price" id="pending-count">0</p>
-                <small style="color: var(--gray);">Awaiting claim</small>
+            <div class="card" style="background: var(--gradient-warning); color: white;">
+                <h3 style="color: white;">⏳ Pending Payments</h3>
+                <p class="course-price" style="color: white; margin: 1rem 0;" id="pending-count">0</p>
+                <small style="color: rgba(255,255,255,0.9);">Awaiting claim</small>
             </div>
         </div>
-
         <div class="card mb-4">
-            <h3 class="mb-3">Quick Actions</h3>
+            <h3 class="mb-3">⚡ Quick Actions</h3>
             <div class="flex gap-2" style="flex-wrap: wrap;">
-                <a href="/instructor/upload-course.html" class="btn btn-primary">Upload New Course</a>
-                <a href="/instructor/upload-materials.html" class="btn btn-outline">Upload Materials</a>
-                <button class="btn btn-success" onclick="loadPendingPayments()">Claim Payments</button>
+                <a href="/instructor/upload-course.html" class="btn btn-success">📚 Upload Course</a>
+                <a href="/instructor/upload-materials.html" class="btn btn-primary">📁 Upload Materials</a>
+            <button class="btn btn-warning" onclick="loadPendingPayments()">💰 Claim Payments</button>
             </div>
         </div>
-
         <div class="card mb-4">
             <h3 class="mb-3">My Courses</h3>
             <div id="my-courses">
                 <div class="spinner"></div>
             </div>
         </div>
-
         <div class="card" id="pending-payments-section" style="display: none;">
             <h3 class="mb-3">Pending Payments to Claim</h3>
             <div id="pending-payments"></div>
         </div>
     </div>
-
     <script src="/js/api.js"></script>
     <script src="/js/auth.js"></script>
     <script>
         requireRole('instructor');
         updateUIBasedOnAuth();
-
         async function loadDashboard() {
             try {
                 try {
@@ -85,10 +74,8 @@
                         throw error;
                     }
                 }
-
                 const coursesData = await API.instructor.getMyCourses();
                 document.getElementById('course-count').textContent = coursesData.data.length;
-
                 const myCoursesContainer = document.getElementById('my-courses');
                 if (coursesData.data.length === 0) {
                     myCoursesContainer.innerHTML = '<p style="color: var(--gray);">No courses uploaded yet.</p>';
@@ -109,7 +96,6 @@
             </div>
           `).join('');
                 }
-
                 try {
                     const pendingData = await API.instructor.getPendingTransactions();
                     document.getElementById('pending-count').textContent = pendingData.data.length;
@@ -117,28 +103,23 @@
                     if (error.message && (error.message.includes('Bank account not found') || error.message.includes('404'))) {
                         document.getElementById('pending-count').innerHTML = '<small>Setup needed</small>';
                     } else {
-
-
+                        console.error('Pending transactions error:', error);
                     }
                 }
-
             } catch (error) {
                 handleAPIError(error);
             }
         }
-
         async function loadPendingPayments() {
             try {
                 const pendingData = await API.instructor.getPendingTransactions();
                 const section = document.getElementById('pending-payments-section');
                 const container = document.getElementById('pending-payments');
-
                 if (pendingData.data.length === 0) {
                     container.innerHTML = '<p style="color: var(--gray);">No pending payments</p>';
                     section.style.display = 'block';
                     return;
                 }
-
                 container.innerHTML = pendingData.data.map(txn => `
           <div class="card mb-2" style="background: #fef3c7;">
             <div class="flex justify-between items-center">
@@ -156,18 +137,14 @@
                 handleAPIError(error);
             }
         }
-
         async function claimPayment(txnId) {
             const secret = prompt('Enter your account secret to claim payment:');
             if (!secret) return;
-
             showLoading('Processing payment claim...');
-
             try {
                 await API.instructor.claimPayment({ transaction_id: txnId, secret });
                 hideLoading();
                 showAlert('Payment claimed successfully!', 'success');
-
                 setTimeout(() => {
                     loadDashboard();
                     loadPendingPayments();
@@ -176,9 +153,7 @@
                 handleAPIError(error);
             }
         }
-
         loadDashboard();
     </script>
 </body>
-
 </html>

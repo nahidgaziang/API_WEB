@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,11 +18,9 @@
             align-items: center;
             justify-content: center;
         }
-
         .purchase-modal.active {
             display: flex;
         }
-
         .modal-content {
             background: white;
             padding: 2rem;
@@ -35,7 +32,6 @@
         }
     </style>
 </head>
-
 <body>
     <nav class="navbar">
         <div class="navbar-brand">LMS</div>
@@ -48,10 +44,8 @@
             <li><a href="#" onclick="logout()" class="navbar-link">Logout</a></li>
         </ul>
     </nav>
-
     <div class="container" style="margin-top: 2rem;">
         <h1 class="mb-3">Browse All Courses</h1>
-
         <div class="card mb-3" style="background: var(--gradient-success); color: white;">
             <div class="flex justify-between items-center">
                 <div>
@@ -61,69 +55,60 @@
                 <small style="color: rgba(255,255,255,0.9);" id="account-info">Loading...</small>
             </div>
         </div>
-
         <div class="grid grid-2" id="courses-container">
             <div class="spinner"></div>
         </div>
     </div>
-
     <div class="purchase-modal" id="purchaseModal">
         <div class="modal-content">
             <h3 class="mb-3">Purchase Course</h3>
             <div id="modal-alert"></div>
-
             <div class="mb-3">
                 <h4 id="modal-course-title"></h4>
                 <p class="course-price" id="modal-course-price"></p>
             </div>
-
             <form id="purchaseForm">
                 <input type="hidden" id="modal-course-id">
-
                 <div class="form-group">
                     <label class="form-label">Enter Your Account Secret</label>
                     <input type="password" class="form-input" id="purchase-secret" required>
                     <small style="color: var(--gray);">This is your bank account password</small>
                 </div>
-
                 <div class="flex gap-2">
-                    <button type="submit" class="btn btn-success">Confirm Purchase</button>
-                    <button type="button" class="btn btn-outline" onclick="closePurchaseModal()">Cancel</button>
+                    <button type="submit" class="btn btn-success">✔ Confirm Purchase</button>
+                    <button type="button" class="btn btn-outline-danger" onclick="closePurchaseModal()">✕
+                        Cancel</button>
                 </div>
             </form>
         </div>
     </div>
-
     <script src="/js/api.js"></script>
     <script src="/js/auth.js"></script>
     <script>
         requireRole('learner');
         updateUIBasedOnAuth();
-
         let currentBalance = 0;
         let enrolledCourseIds = [];
-
         async function loadCourses() {
             try {
                 const balanceData = await API.bank.getBalance();
                 currentBalance = balanceData.data.balance;
                 document.getElementById('balance').textContent = `${currentBalance.toFixed(2)} Tk`;
                 document.getElementById('account-info').textContent = `Account: ${balanceData.data.account_number}`;
-
                 const enrollmentsData = await API.learner.getMyEnrollments();
                 enrolledCourseIds = enrollmentsData.data.map(e => e.course_id);
-
+                const enrollmentStatusMap = {};
+                enrollmentsData.data.forEach(e => { enrollmentStatusMap[e.course_id] = e.status; });
                 const coursesData = await API.learner.getAllCourses();
                 const coursesContainer = document.getElementById('courses-container');
-
                 if (coursesData.data.length === 0) {
                     coursesContainer.innerHTML = '<p style="color: var(--gray);">No courses available at the moment.</p>';
                     return;
                 }
-
                 coursesContainer.innerHTML = coursesData.data.map(course => {
-                    const isEnrolled = enrolledCourseIds.includes(course.id);
-
+                    const enrollStatus = enrollmentStatusMap[course.id];
+                    const isEnrolled = !!enrollStatus;
+                    const isPending = enrollStatus === 'pending';
                     return `
             <div class="card course-card fade-in">
               <h3>${course.title}</h3>
@@ -131,11 +116,13 @@
               <p class="course-instructor">Instructor: ${course.instructor.full_name}</p>
               <p class="course-price mt-2">${parseFloat(course.price).toFixed(2)} Tk</p>
               ${isEnrolled
-                        ? '<span class="badge badge-success">Enrolled</span>'
-                        : `<button class="btn btn-primary btn-block mt-2" onclick="openPurchaseModal(${course.id}, '${course.title}', ${course.price})">
+                            ? isPending
+                                ? '<span class="badge badge-warning">⏳ Payment Pending</span>'
+                                : '<span class="badge badge-success">✅ Enrolled</span>'
+                            : `<button class="btn btn-primary btn-block mt-2" onclick="openPurchaseModal(${course.id}, '${course.title}', ${course.price})">
                      Enroll Now
                    </button>`
-                    }
+                        }
             </div>
           `;
                 }).join('');
@@ -143,13 +130,11 @@
                 handleAPIError(error);
             }
         }
-
         function openPurchaseModal(courseId, title, price) {
             if (currentBalance < price) {
                 showAlert('Insufficient balance. Please add funds to your account.', 'error');
                 return;
             }
-
             document.getElementById('modal-course-id').value = courseId;
             document.getElementById('modal-course-title').textContent = title;
             document.getElementById('modal-course-price').textContent = `${parseFloat(price).toFixed(2)} Tk`;
@@ -157,27 +142,20 @@
             document.getElementById('modal-alert').innerHTML = '';
             document.getElementById('purchaseModal').classList.add('active');
         }
-
         function closePurchaseModal() {
             document.getElementById('purchaseModal').classList.remove('active');
         }
-
         document.getElementById('purchaseForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-
             const courseId = parseInt(document.getElementById('modal-course-id').value);
             const secret = document.getElementById('purchase-secret').value;
-
             document.getElementById('modal-alert').innerHTML = '';
             showLoading('Processing payment...');
-
             try {
                 await API.learner.enrollInCourse({ course_id: courseId, secret });
-
                 hideLoading();
                 closePurchaseModal();
                 showAlert('Course purchased successfully!', 'success');
-
                 setTimeout(() => {
                     loadCourses();
                 }, 1000);
@@ -190,9 +168,7 @@
         `;
             }
         });
-
         loadCourses();
     </script>
 </body>
-
 </html>

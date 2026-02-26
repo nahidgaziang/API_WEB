@@ -4,22 +4,18 @@ import dotenv from 'dotenv';
 import sequelize from './config/database';
 import { config } from './config/config';
 import { errorHandler } from './middleware/errorHandler';
-
 import authRoutes from './routes/auth.routes';
 import bankRoutes from './routes/bank.routes';
 import learnerRoutes from './routes/learner.routes';
 import instructorRoutes from './routes/instructor.routes';
-
+import adminRoutes from './routes/admin.routes';
+import publicRoutes from './routes/public.routes';
 import './models';
-
 dotenv.config();
-
 const app: Application = express();
-
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
 app.get('/', (req: Request, res: Response) => {
     res.json({
         success: true,
@@ -30,25 +26,24 @@ app.get('/', (req: Request, res: Response) => {
             bank: '/api/bank',
             learner: '/api/learner',
             instructor: '/api/instructor',
+            admin: '/api/admin',
+            public: '/api/public',
         },
     });
 });
-
 app.use('/api/auth', authRoutes);
 app.use('/api/bank', bankRoutes);
 app.use('/api/learner', learnerRoutes);
 app.use('/api/instructor', instructorRoutes);
-
+app.use('/api/admin', adminRoutes);
+app.use('/api/public', publicRoutes);
 app.use(errorHandler);
-
 const startServer = async () => {
     try {
         await sequelize.authenticate();
         console.log('Database connection established successfully');
-
-        await sequelize.sync({ alter: false });
+        await sequelize.sync({ alter: true });
         console.log('Database models synchronized');
-
         const PORT = config.port;
         app.listen(PORT, () => {
             console.log(`Server running on http://localhost:${PORT}`);
@@ -60,7 +55,5 @@ const startServer = async () => {
         process.exit(1);
     }
 };
-
 startServer();
-
 export default app;

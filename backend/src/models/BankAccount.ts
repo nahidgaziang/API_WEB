@@ -1,6 +1,5 @@
 import { DataTypes, Model } from 'sequelize';
 import sequelize from '../config/database';
-
 export interface BankAccountAttributes {
     id?: number;
     user_id: number;
@@ -10,7 +9,6 @@ export interface BankAccountAttributes {
     created_at?: Date;
     updated_at?: Date;
 }
-
 class BankAccount extends Model<BankAccountAttributes> implements BankAccountAttributes {
     public id!: number;
     public user_id!: number;
@@ -20,7 +18,6 @@ class BankAccount extends Model<BankAccountAttributes> implements BankAccountAtt
     public readonly created_at!: Date;
     public readonly updated_at!: Date;
 }
-
 BankAccount.init(
     {
         id: {
@@ -55,5 +52,4 @@ BankAccount.init(
         updatedAt: 'updated_at',
     }
 );
-
 export default BankAccount;
