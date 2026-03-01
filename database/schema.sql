@@ -130,7 +130,8 @@ CREATE TABLE transactions (
     transaction_type ENUM(
         'course_purchase',
         'instructor_payment',
-        'upload_payment'
+        'upload_payment',
+        'topup'
     ) NOT NULL,
     reference_id INT,
     status ENUM(

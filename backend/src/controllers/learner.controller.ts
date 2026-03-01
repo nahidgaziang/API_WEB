@@ -306,7 +306,7 @@ export const topUpBalance = async (req: AuthRequest, res: Response): Promise<voi
             from_account: 'EXTERNAL',
             to_account: bankAccount.account_number,
             amount: topupAmount,
-            transaction_type: 'topup' as any,
+            transaction_type: 'topup',
             reference_id: userId!,
             status: 'completed',
             completed_at: new Date(),

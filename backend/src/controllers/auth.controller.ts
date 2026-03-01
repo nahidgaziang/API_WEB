@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { User, BankAccount } from '../models';
 import { generateToken } from '../utils/jwt';
 import { AuthRequest } from '../middleware/auth';
+
 export const register = async (req: Request, res: Response): Promise<void> => {
     try {
         const { username, email, password, role, full_name } = req.body;
@@ -59,6 +60,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
         res.status(500).json({ success: false, message: 'Registration failed', error: error.message });
     }
 };
+
 export const login = async (req: Request, res: Response): Promise<void> => {
     try {
         const { username, password } = req.body;

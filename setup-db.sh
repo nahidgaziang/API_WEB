@@ -1,4 +1,3 @@
-#!/bin/bash
 sudo mysql -u root <<EOF
 CREATE USER IF NOT EXISTS 'lms_user'@'localhost' IDENTIFIED BY 'lms_password';
 CREATE DATABASE IF NOT EXISTS lms_system;

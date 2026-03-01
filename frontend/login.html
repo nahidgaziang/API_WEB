@@ -149,6 +149,7 @@
                 <li>Manage your wallet</li>
             </ul>
         </div>
+
         <div class="auth-right">
             <div class="auth-form-box fade-in">
                 <h2>Sign In</h2>
@@ -177,6 +178,9 @@
             </div>
         </div>
     </div>
+
+
+
     <script src="/js/api.js"></script>
     <script src="/js/auth.js"></script>
     <script>
@@ -186,6 +190,8 @@
         const loginForm = document.getElementById('loginForm');
         const alertContainer = document.getElementById('alert-container');
         loginForm.addEventListener('submit', async (e) => {
+
+            console.log(e);
             e.preventDefault();
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
@@ -193,6 +199,7 @@
             showLoading('Signing in...');
             try {
                 const response = await API.auth.login({ username, password });
+                // const response = await API.auth.login({username, password})
                 API.setToken(response.data.token);
                 setUser(response.data.user);
                 hideLoading();

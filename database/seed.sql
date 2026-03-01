@@ -3,7 +3,7 @@ USE lms_system;
 INSERT INTO
     topics (name, description, is_active)
 VALUES (
-        'Web Development Fundamentals',
+        'Web Technology Fundamentals',
         'HTML, CSS, JavaScript and the basics of building websites',
         1
     ),
